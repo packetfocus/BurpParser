@@ -9,6 +9,17 @@ import csv
 import base64
 import os
 
+import logging
+import logging.config
+from logging.config import fileConfig
+
+#logging conf gile
+logging.config.fileConfig('logging.conf')
+
+# create logger
+logger = logging.getLogger()
+status_logger = logging.getLogger('xmlparser.status')
+
 # define globals
 global issueList
 global xmlFileIn
@@ -17,6 +28,8 @@ global docOutFile
 # Set input and output files
 xmlFileIn = 'xml\sample.xml'
 docOutFile = os.path.join('output', 'demo.docx')
+status_logger.info('Using XML Input File: {}'.format(xmlFileIn))
+status_logger.info('Creating Word Dcument : {}'.format(docOutFile))
 
 # init Document
 document = Document()
@@ -48,15 +61,13 @@ def buildWordDoc(name, severity, host,  ip, path, location, issueBackground, iss
     orig_location = location
 
     loc_count = location.count('/')
-    print('DEBUG!!! Location String {} location count : {}'.format(location, loc_count))
+    status_logger.debug('Location String {} location count : {}'.format(location, loc_count))
     if loc_count < 2:
-        print('[DEBUG] LOCATION IS DEFAULT')
+        status_logger.debug('Location/Path is Default "/" ')
         #full_location = os.path.join(host, location)
         full_location = host + location
         location = full_location
-        print('[DEBUG] LOCATION IS NOW IN IF FUNCTION {}'.format(location))
-        print('[DEBUG] FULL_LOCATION IS NOW IN IF FUNCTION {}'.format(full_location))
-    print('[DEBUG] LOCATION IS NOW {}'.format(location))
+    status_logger.debug('Location is Now {}'.format(location))
     #reformat data if needed
     issueBackground = str(issueBackground).replace('|', ',')
     remediationBackground = str(remediationBackground).replace('</p>', '')
@@ -69,6 +80,7 @@ def buildWordDoc(name, severity, host,  ip, path, location, issueBackground, iss
     # use title to fix Capitals
     severity = severity.title()
     build_header = '{} ({})'.format(name, severity)
+    status_logger.info('Creating Issue: {}'.format(build_header))
     document.add_heading(build_header, level=1)
     # added severity to issue title
     #document.add_heading("Severity:", level=3)
@@ -136,7 +148,6 @@ def process():
     global issueList
     issueList = []
     # inputfile for the XML
-    print('[DEBUG] Using file: {}'.format(xmlFileIn))
     # THIS WILL BREAK IS YOU CHANGE HTML.PARSER!
     soup = BeautifulSoup(open(xmlFileIn, 'r'), 'html.parser')
     # pull all issue tags from XML
@@ -163,6 +174,7 @@ def process():
 
         except:
             remediationBackground = 'BLANK'
+            status_logger.error('Remediation Background is BLANK')
 
         try:
             vulnerabilityClassification = i.find('vulnerabilityclassifications').text
@@ -171,6 +183,7 @@ def process():
 
         except:
             vulnerabilityClassification = 'BLANK'
+            status_logger.error('Vuln Classification is BLANK')
 
         try:
             # print(request)
@@ -182,8 +195,8 @@ def process():
             request = response.replace(',', '","')
             # print(request)
         except:
-            print('[ERROR] Request is blank for {}'.format(i))
             request = 'BLANK'
+            status_logger.error('Request is blank for {}'.format(request))
 
         try:
             # print(response)
@@ -195,8 +208,8 @@ def process():
             # print(response)
 
         except:
-            print('[ERROR] Response is blank for {}'.format(i))
             response = 'BLANK'
+            status_logger.error('Response is blank for {}'.format(response))
 
         try:
             # print(response)
@@ -207,12 +220,12 @@ def process():
 
 
         except:
-            print('[ERROR] Issue Detail is blank for {}'.format(i))
             issueDetail = 'BLANK'
+            status_logger.error('Issue Detail is blank for {}'.format(issueDetail))
 
         #build our word document here
         buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground)
-
+        status_logger.info('Successfully Generate Data for Word Doc Creation')
 
 
         """
@@ -223,16 +236,19 @@ def process():
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
                   vulnerabilityClassification, issueDetail)
         issueList.append(result)
-    print('{} issues to report on'.format(len(issueList)))
+    status_logger.info('{} issues to report on'.format(len(issueList)))
+    logger.info('{} issues to report on'.format(len(issueList)))
 
 
 def writeCSV():
+    outfile = 'NOTSET'
     # need to fix this logic, still fires error instead of except:
     try:
         outfile = open("output/burpOutput.csv", "w", newline='')
     except:
-        print('[CRITICAL] Cant open CSV outfile : {}'.format(outfile))
-    print('Writing to CSV'.format(outfile))
+        status_logger.critical('Cant open CSV outfile : {}'.format(outfile))
+
+    status_logger.info('Writing to CSV'.format(outfile))
     writer = csv.writer(outfile, delimiter=',')
     """
     writer.writerow(
@@ -246,13 +262,16 @@ def writeCSV():
 
 
 def main():
-    print('Staring to process the XML file and convert to CSV.')
-    print('[DEBUG] Word Output file: {}'.format(docOutFile))
+    logger.info('Starting Logs')
+    status_logger.info('Starting Logging')
+
     process()
     writeCSV()
     # Save Word Doc
 
     document.save(docOutFile)
+
+    status_logger.info('Task Has Completed')
 
 
 if __name__ == '__main__':
