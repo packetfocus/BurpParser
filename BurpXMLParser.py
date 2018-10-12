@@ -1,5 +1,5 @@
-# Burp Parser XML to CSV
-# Simple, Easy to Use
+# Burp Pro XML parser
+# COnverts to CSV and makes a Word Template
 
 from docx import Document
 # from BeautifulSoup import BeautifulSoup
@@ -8,10 +8,10 @@ import csv
 import os
 import random
 import base64
+
 global issueOutput
 
 document = Document()
-
 
 
 def process():
@@ -24,11 +24,11 @@ def process():
     issueOutput = []
     for i in issues:
         print(i)
-        #exit(1)
+
         name = i.find('name').text
         document.add_heading(name, level=1)
         print(name)
-        #exit(1)
+
         host = i.find('host')
         ip = host['ip']
         host = host.text
@@ -42,9 +42,8 @@ def process():
         document.add_heading("Severity: {}".format(severity), level=3)
         confidence = i.find('confidence').text
         document.add_heading("Confidence: {}".format(confidence), level=3)
-
         issueBackground = i.find('issuebackground').text  # .replace("<p>","").replace("</p>","")
-        issueBackground = str(issueBackground).replace(',',"|").replace('<p>', "")
+        issueBackground = str(issueBackground).replace(',', "|").replace('<p>', "")
         # issueBackground = i.find('issuebackground').text
         document.add_heading("Issue Background: {}".format(issueBackground), level=3)
 
@@ -55,34 +54,32 @@ def process():
         except:
             remediationBackground = 'BLANK'
 
-        #remediationBackground = str(remediationBackground).replace(",", "")
-
         try:
 
             vulnerabilityClassification = i.find('vulnerabilityclassifications').text
-            vulnerabilityClassification = str(vulnerabilityClassification).replace("<ul>", "").replace("</ul>","").replace("\n", "")
+            vulnerabilityClassification = str(vulnerabilityClassification).replace("<ul>", "").replace("</ul>",
+                                                                                                       "").replace("\n",
+                                                                                                                   "")
             document.add_heading("Vuln Classification: {}".format(vulnerabilityClassification), level=3)
         except:
             vulnerabilityClassification = 'BLANK'
         # request = base64.b64decode(i.find('requestresponse').find('request').text)
 
-
-        try :
-            #print(request)
+        try:
+            # print(request)
             print('Decoding Request:')
             request = i.find('requestresponse').find('request').text
             request = base64.b64decode(request)
             request = str(request)
             request = response.replace(',', '","')
-            #request=response.replace(','," ")
+
             print(request)
         except:
             print('[ERROR] Request is blank for {}'.format(i))
             request = 'BLANK'
 
-
-        try :
-            #print(response)
+        try:
+            # print(response)
             print('Decoding Response:')
             response = i.find('requestresponse').find('response').text
             response = base64.b64decode(response)
@@ -94,23 +91,12 @@ def process():
             print('[ERROR] Response is blank for {}'.format(i))
             response = 'BLANK'
 
-        # response = base64.b64decode(i.find('requestresponse').find('response').text)
-        #response = i.find('requestresponse').find('response').text
-        #response = base64.b64decode(response)
-        #issueDetail = i.find('issuedetail').text
-
         try:
             # print(response)
             print('Issue Detail:')
             issueDetail = i.find('issuedetail').text
-
             issueDetail = str(issueDetail).replace(',', '","')
             document.add_heading("Issue Detail: {}".format(issueDetail), level=3)
-            with open('issues.txt' , 'w') as f2:
-                f2.write(name + "\n")
-                #f2.write(issueDetail + "\n")
-                #f2.write(response + "\n")
-                #f2.write(request + " \n")
 
 
         except:
@@ -125,20 +111,10 @@ def process():
                   vulnerabilityClassification, issueDetail)
         issueOutput.append(result)
     print('{} issues to report on'.format(len(issueOutput)))
-    #for result in issueOutput:
-     #   print(result)
 
-        #
-        #exit(1)
-    # print filePath
-
-    # rando = random.randint(2000,3000)
-    # filenameout = "BurpOutput %s" % rando
 
 def writeCSV():
-
-
-    outfile = open("burpOutput.csv", "w" , newline='')
+    outfile = open("burpOutput.csv", "w", newline='')
     print('Writing to CSV'.format(outfile))
     writer = csv.writer(outfile, delimiter=',')
     writer.writerow(
@@ -148,15 +124,12 @@ def writeCSV():
     writer.writerows(issueOutput)
 
 
-
 def main():
     print('Staring to process the XML file and convert to CSV.')
     process()
     writeCSV()
-
     document.add_page_break()
     document.save('demo.docx')
-
 
 
 if __name__ == '__main__':
