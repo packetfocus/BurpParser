@@ -39,25 +39,38 @@ document = Document()
 """
 
 
-def buildWordDoc(name, severity, issueBackground, remediationBackground):
+def buildWordDoc(name, severity, ip, path, location, issueBackground, issueDetail, remediationBackground):
+    #reformat data if needed
+    issueBackground = str(issueBackground).replace('|', ',')
+    remediationBackground = str(remediationBackground).replace('</p>', '')
+
+
     # init Document
     #document = Document()
-
     document.add_heading(name, level=1)
-
     document.add_heading("Severity:", level=3)
     paragraph = document.add_paragraph(severity)
+    document.add_heading("Technical Details:", level=3)
+    table = document.add_table(rows=1, cols=3)
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = 'IP'
+    hdr_cells[1].text = 'Path'
+    hdr_cells[2].text = 'Location'
+    row_cells = table.add_row().cells
+    row_cells[0].text = ip
+    row_cells[1].text = path
+    row_cells[2].text = location
 
+    #document.add_heading("IP:", level=3)
+    #paragraph = document.add_paragraph(ip)
     document.add_heading("Overview:", level=3)
-
     paragraph = document.add_paragraph(issueBackground)
-
     document.add_heading("Evidence:", level=3)
-    paragraph = document.add_paragraph('Snippet or Screenshot Here')
-
+    paragraph = document.add_paragraph(issueDetail)
     document.add_heading("Recommendation:", level=3)
     paragraph = document.add_paragraph(remediationBackground)
     paragraph_format = paragraph.paragraph_format
+    #formatting to keep our vulns together instead of line breaks
     paragraph_format.keep_together
 
 
@@ -74,20 +87,15 @@ def process():
 
     for i in issues:
         name = i.find('name').text
-        # add vuln name in word
-        # need to break this out to give more control of order.
-
         host = i.find('host')
         ip = host['ip']
         host = host.text
         path = i.find('path').text
         location = i.find('location').text
         severity = i.find('severity').text
-
         confidence = i.find('confidence').text
-        issueBackground = i.find('issuebackground').text  # .replace("<p>","").replace("</p>","")
+        issueBackground = i.find('issuebackground').text
         issueBackground = str(issueBackground).replace('<p>', "").replace('</p>', "")
-        # issueBackground = i.find('issuebackground').text
         # have to replace commas before making csv. Replaced with | for now.
         issueBackground = issueBackground.replace(',', "|")
 
@@ -146,7 +154,7 @@ def process():
             issueDetail = 'BLANK'
 
         #build our word document here
-        buildWordDoc(name, severity, issueBackground, remediationBackground)
+        buildWordDoc(name, severity, ip, path, location, issueBackground, issueDetail, remediationBackground)
 
 
 
