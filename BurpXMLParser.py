@@ -9,7 +9,7 @@ import os
 import random
 import base64
 
-global issueOutput
+global issueList
 
 document = Document()
 
@@ -20,8 +20,8 @@ def process():
     # THIS WILL BREAK IS YOU CHANGE HTML.PARSER!
     soup = BeautifulSoup(open(filePath, 'r'), 'html.parser')
     issues = soup.findAll('issue')
-    global issueOutput
-    issueOutput = []
+    global issueList
+    issueList = []
     for i in issues:
         print(i)
 
@@ -109,8 +109,8 @@ def process():
         document.add_page_break()
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
                   vulnerabilityClassification, issueDetail)
-        issueOutput.append(result)
-    print('{} issues to report on'.format(len(issueOutput)))
+        issueList.append(result)
+    print('{} issues to report on'.format(len(issueList)))
 
 
 def writeCSV():
@@ -121,7 +121,7 @@ def writeCSV():
         ["Name", "Host", "IP", "Path", "Severity", "Confidence", "Issue Background", "Remediation Background",
          "Vulnerability Classification", "Issue Details", "Request", "Response"])
 
-    writer.writerows(issueOutput)
+    writer.writerows(issueList)
 
 
 def main():
