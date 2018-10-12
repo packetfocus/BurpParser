@@ -11,3 +11,6 @@ Requires Beautiful Soup 4
 
 Requres Python Docx
   pip install python-docx
+  
+  # Get .XML from Burp
+  Using burp Pro, go into the issues section. Highlight the issues you want to report on then right-click and save as .xml report. Use the standard options and layout for the .XML file. 
