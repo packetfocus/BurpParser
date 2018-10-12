@@ -1,3 +1,6 @@
 #ignore doc
 *.doc
 *.docx
+
+#CSV
+*.csv

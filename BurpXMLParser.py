@@ -114,7 +114,7 @@ def process():
 
 
 def writeCSV():
-    outfile = open("burpOutput.csv", "w", newline='')
+    outfile = open("output/burpOutput.csv", "w", newline='')
     print('Writing to CSV'.format(outfile))
     writer = csv.writer(outfile, delimiter=',')
     writer.writerow(
@@ -129,7 +129,7 @@ def main():
     process()
     writeCSV()
     document.add_page_break()
-    document.save('demo.docx')
+    document.save('output/demo.docx')
 
 
 if __name__ == '__main__':
