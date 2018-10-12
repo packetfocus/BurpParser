@@ -5,30 +5,32 @@ from docx import Document
 # from BeautifulSoup import BeautifulSoup
 from bs4 import BeautifulSoup
 import csv
-import os
-import random
 import base64
 
 global issueList
-
+global xmlFileIn
+# init Document
 document = Document()
+
+xmlFileIn = 'xml\sample.xml'
 
 
 def process():
-    filePath = 'xml\sample.xml'
-    print('[DEBUG] Using file: {}'.format(filePath))
-    # THIS WILL BREAK IS YOU CHANGE HTML.PARSER!
-    soup = BeautifulSoup(open(filePath, 'r'), 'html.parser')
-    issues = soup.findAll('issue')
     global issueList
     issueList = []
+    # inputfile for the XML
+    # filePath = 'xml\sample.xml'
+    print('[DEBUG] Using file: {}'.format(xmlFileIn))
+    # THIS WILL BREAK IS YOU CHANGE HTML.PARSER!
+    soup = BeautifulSoup(open(xmlFileIn, 'r'), 'html.parser')
+    # pull all issue tags from XML
+    issues = soup.findAll('issue')
+
     for i in issues:
-        print(i)
-
         name = i.find('name').text
+        # add vuln name in word
+        # need to break this out to give more control of order.
         document.add_heading(name, level=1)
-        print(name)
-
         host = i.find('host')
         ip = host['ip']
         host = host.text
@@ -43,9 +45,11 @@ def process():
         confidence = i.find('confidence').text
         document.add_heading("Confidence: {}".format(confidence), level=3)
         issueBackground = i.find('issuebackground').text  # .replace("<p>","").replace("</p>","")
-        issueBackground = str(issueBackground).replace(',', "|").replace('<p>', "")
+        issueBackground = str(issueBackground).replace('<p>', "").replace('</p>', "")
         # issueBackground = i.find('issuebackground').text
         document.add_heading("Issue Background: {}".format(issueBackground), level=3)
+        # have to replace commas before making csv. Replaced with | for now.
+        issueBackground = issueBackground.replace(',', "|")
 
         try:
             remediationBackground = i.find('remediationbackground').text
@@ -57,9 +61,8 @@ def process():
         try:
 
             vulnerabilityClassification = i.find('vulnerabilityclassifications').text
-            vulnerabilityClassification = str(vulnerabilityClassification).replace("<ul>", "").replace("</ul>",
-                                                                                                       "").replace("\n",
-                                                                                                                   "")
+            vulnerabilityClassification = str(vulnerabilityClassification).replace("<ul>", "").replace("</ul>", "")
+            vulnerabilityClassification = vulnerabilityClassification.replace("\n", "")
             document.add_heading("Vuln Classification: {}".format(vulnerabilityClassification), level=3)
         except:
             vulnerabilityClassification = 'BLANK'
@@ -114,13 +117,23 @@ def process():
 
 
 def writeCSV():
-    outfile = open("output/burpOutput.csv", "w", newline='')
+    #need to fix this logic, still fires error instead of except:
+    try:
+        outfile = open("output/burpOutput.csv", "w", newline='')
+    except:
+        print('[CRITICAL] Cant open CSV outfile : {}'.format(outfile))
     print('Writing to CSV'.format(outfile))
     writer = csv.writer(outfile, delimiter=',')
+    """
     writer.writerow(
         ["Name", "Host", "IP", "Path", "Severity", "Confidence", "Issue Background", "Remediation Background",
          "Vulnerability Classification", "Issue Details", "Request", "Response"])
-
+    
+    
+    """
+    writer.writerow(
+        ["Name", "Host", "IP", "Path", "Severity", "Confidence", "Issue Background", "Remediation Background",
+         "Vulnerability Classification", "Issue Details"])
     writer.writerows(issueList)
 
 
@@ -128,7 +141,7 @@ def main():
     print('Staring to process the XML file and convert to CSV.')
     process()
     writeCSV()
-    document.add_page_break()
+    # Save Word Doc
     document.save('output/demo.docx')
 
 
