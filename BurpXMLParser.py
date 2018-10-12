@@ -8,10 +8,19 @@ from bs4 import BeautifulSoup
 import csv
 import base64
 import os
+import optparse
+import sys
 
 import logging
 import logging.config
 from logging.config import fileConfig
+
+LOGGING_LEVELS = {'critical': logging.CRITICAL,
+                  'error': logging.ERROR,
+                  'warning': logging.WARNING,
+                  'info': logging.INFO,
+                  'debug': logging.DEBUG}
+
 
 #logging conf gile
 logging.config.fileConfig('logging.conf')
@@ -24,9 +33,15 @@ status_logger = logging.getLogger('xmlparser.status')
 global issueList
 global xmlFileIn
 global docOutFile
+global cli_XMLFILE
+cli_XMLFILE = ""
 
 # Set input and output files
-xmlFileIn = 'xml\sample.xml'
+#xmlFileIn = 'xml\sample.xml'
+xmlFileIn = cli_XMLFILE
+
+
+
 docOutFile = os.path.join('output', 'demo.docx')
 status_logger.info('Using XML Input File: {}'.format(xmlFileIn))
 status_logger.info('Creating Word Dcument : {}'.format(docOutFile))
@@ -144,12 +159,21 @@ def buildWordDoc(name, severity, host,  ip, path, location, issueBackground, iss
 
 
 
-def process():
+def process(xmlInFile):
+    cwd = os.getcwd()
+    xmlFileIn = os.path.join(cwd, xmlInFile)
     global issueList
     issueList = []
     # inputfile for the XML
     # THIS WILL BREAK IS YOU CHANGE HTML.PARSER!
-    soup = BeautifulSoup(open(xmlFileIn, 'r'), 'html.parser')
+    #try:
+    if not os.path.isfile(xmlFileIn):
+        status_logger.critical('Cant open XML! {}'.format(xmlInFile))
+        exit(1)
+
+    soup = BeautifulSoup(open(xmlInFile, 'r'), 'html.parser')
+    status_logger.info('Using XML Input File {}'.format(xmlInFile))
+
     # pull all issue tags from XML
     issues = soup.findAll('issue')
 
@@ -225,7 +249,7 @@ def process():
 
         #build our word document here
         buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground)
-        status_logger.info('Successfully Generate Data for Word Doc Creation')
+
 
 
         """
@@ -238,6 +262,7 @@ def process():
         issueList.append(result)
     status_logger.info('{} issues to report on'.format(len(issueList)))
     logger.info('{} issues to report on'.format(len(issueList)))
+    status_logger.info('Successfully Generate Data for Word Doc Creation')
 
 
 def writeCSV():
@@ -262,16 +287,31 @@ def writeCSV():
 
 
 def main():
-    logger.info('Starting Logs')
-    status_logger.info('Starting Logging')
+    parser = optparse.OptionParser()
+    parser.add_option('-i', '--xml-inputFile', help='Specify XML Input File', dest='xml_inputFile')
+    (options, args) = parser.parse_args()
+    cli_XMLFILE = options.xml_inputFile
+    status_logger.critical('cli_XMLFILE is Set to {}'.format(cli_XMLFILE))
 
-    process()
+    #cli_XMLFILE =  sys.argv[1]
+    xmlFileIn = cli_XMLFILE
+    if not cli_XMLFILE:
+        status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED')
+        exit(1)
+    #status_logger.info('Command line XML Input file {}'.format(options.xml_inputFile))
+    logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
+    status_logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
+
+    process(xmlFileIn)
     writeCSV()
     # Save Word Doc
 
     document.save(docOutFile)
 
     status_logger.info('Task Has Completed')
+
+
+
 
 
 if __name__ == '__main__':
