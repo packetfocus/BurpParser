@@ -39,7 +39,22 @@ document = Document()
 """
 
 
-def buildWordDoc(name, severity, ip, path, location, issueBackground, issueDetail, remediationBackground):
+def buildWordDoc(name, severity, host,  ip, path, location, issueBackground, issueDetail, remediationBackground):
+    # refer to https://python-docx.readthedocs.io/en/latest/
+    # we init the doc at the start of this script
+    #then save it in the main function after everything is built.
+    location = str(location)
+
+    loc_count = location.count('/')
+    print('DEBUG!!! Location String {} location count : {}'.format(location, loc_count))
+    if loc_count < 2:
+        print('[DEBUG] LOCATION IS DEFAULT')
+        #full_location = os.path.join(host, location)
+        full_location = host + location
+        location = full_location
+        print('[DEBUG] LOCATION IS NOW IN IF FUNCTION {}'.format(location))
+        print('[DEBUG] FULL_LOCATION IS NOW IN IF FUNCTION {}'.format(full_location))
+    print('[DEBUG] LOCATION IS NOW {}'.format(location))
     #reformat data if needed
     issueBackground = str(issueBackground).replace('|', ',')
     remediationBackground = str(remediationBackground).replace('</p>', '')
@@ -47,19 +62,27 @@ def buildWordDoc(name, severity, ip, path, location, issueBackground, issueDetai
 
     # init Document
     #document = Document()
-    document.add_heading(name, level=1)
-    document.add_heading("Severity:", level=3)
-    paragraph = document.add_paragraph(severity)
+    severity = str(severity)
+    severity = severity + ' Risk'
+    # use title to fix Capitals
+    severity = severity.title()
+    build_header = '{} ({})'.format(name, severity)
+    document.add_heading(build_header, level=1)
+    # added severity to issue title
+    #document.add_heading("Severity:", level=3)
+    #paragraph = document.add_paragraph(severity)
+    document.add_heading("Affected Host:", level=3)
+    paragraph = document.add_paragraph(host)
     document.add_heading("Technical Details:", level=3)
     table = document.add_table(rows=1, cols=3)
     hdr_cells = table.rows[0].cells
     hdr_cells[0].text = 'IP'
-    hdr_cells[1].text = 'Path'
-    hdr_cells[2].text = 'Location'
+    hdr_cells[1].text = 'Location'
+    hdr_cells[2].text = 'Path'
     row_cells = table.add_row().cells
     row_cells[0].text = ip
-    row_cells[1].text = path
-    row_cells[2].text = location
+    row_cells[1].text = location
+    row_cells[2].text = path
 
     #document.add_heading("IP:", level=3)
     #paragraph = document.add_paragraph(ip)
@@ -154,7 +177,7 @@ def process():
             issueDetail = 'BLANK'
 
         #build our word document here
-        buildWordDoc(name, severity, ip, path, location, issueBackground, issueDetail, remediationBackground)
+        buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground)
 
 
 
