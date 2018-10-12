@@ -1,1 +1,5 @@
-#
+# Requires BS4 for python 3
+beautifulsoup4==4.6.3
+
+# python docx
+python-docx==0.8.7
