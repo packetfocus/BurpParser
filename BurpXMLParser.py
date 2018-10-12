@@ -2,6 +2,7 @@
 # Converts to CSV and makes a Word Template
 
 from docx import Document
+from docx.shared import Inches
 # from BeautifulSoup import BeautifulSoup
 from bs4 import BeautifulSoup
 import csv
@@ -44,6 +45,7 @@ def buildWordDoc(name, severity, host,  ip, path, location, issueBackground, iss
     # we init the doc at the start of this script
     #then save it in the main function after everything is built.
     location = str(location)
+    orig_location = location
 
     loc_count = location.count('/')
     print('DEBUG!!! Location String {} location count : {}'.format(location, loc_count))
@@ -71,26 +73,58 @@ def buildWordDoc(name, severity, host,  ip, path, location, issueBackground, iss
     # added severity to issue title
     #document.add_heading("Severity:", level=3)
     #paragraph = document.add_paragraph(severity)
-    document.add_heading("Affected Host:", level=3)
+    document.add_heading("Vulnerable Host:", level=3)
     paragraph = document.add_paragraph(host)
+    document.add_heading("Vulnerable URL:", level=3)
+    if 'http' in location:
+        location = orig_location
+    host_url = host + location
+    paragraph = document.add_paragraph(host_url)
     document.add_heading("Technical Details:", level=3)
-    table = document.add_table(rows=1, cols=3)
+    table = document.add_table(rows=1, cols=2)
+
+
     hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = 'IP'
-    hdr_cells[1].text = 'Location'
-    hdr_cells[2].text = 'Path'
+    hdr_cells[0].text = 'IP:'
+    hdr_cells[0].width = Inches(.00)
+    hdr_cells[1].text = ip
+    hdr_cells[1].width = Inches(.5)
+    hdr_cells[1].left_margin = .1
     row_cells = table.add_row().cells
-    row_cells[0].text = ip
-    row_cells[1].text = location
-    row_cells[2].text = path
+    row_cells[0].text = 'Path:'
+    row_cells[0].width = Inches(.00)
+    row_cells[1].text = path
+    row_cells[1].width = Inches(.5)
+    row_cells[1].left_margin = .1
+
+
+    #for cell in table.rows[0].cells:
+        #cell.width = Inches(.4)
+
+
 
     #document.add_heading("IP:", level=3)
     #paragraph = document.add_paragraph(ip)
     document.add_heading("Overview:", level=3)
+    issueBackground = issueBackground.replace('<ol>', "").replace('</ol>', "").replace('<li>', "").replace('</li>', "")
+    issueBackground = issueBackground.replace('<ul>', "").replace('</ul>', "").replace('<br>', "").replace('</br>', "")
     paragraph = document.add_paragraph(issueBackground)
+
     document.add_heading("Evidence:", level=3)
+    issueDetail = str(issueDetail).replace('<br>', "").replace('<strong>', "").replace('</strong>', "")
+    issueDetail = issueDetail.replace("</td>", "").replace('</tr>', "").replace('<tr>', "").replace('<td>', "")
+    issueDetail = issueDetail.replace('<b>', "").replace('</b>', "").replace('<h4>', "").replace('</h4>', "")
+    issueDetail = issueDetail.replace('&nbsp', " ").replace('</table>', " ").replace('<table>', " ")
+    issueDetail = issueDetail.replace('<ol>', "").replace('</ol>', "").replace('<li>', "").replace('</li>', "")
+    issueDetail = issueDetail.replace('<ul>', "").replace('</ul>', "")
+    # replace the commas we decoded
+    issueDetail = issueDetail.replace('","', "")
     paragraph = document.add_paragraph(issueDetail)
     document.add_heading("Recommendation:", level=3)
+    remediationBackground= str(remediationBackground).replace('&quot;', " ").replace('<b>', "").replace('</b>', "")
+    remediationBackground = str(remediationBackground).replace('&nbsp', " ").replace('</table>', " ").replace('<table>', " ")
+    remediationBackground = str(remediationBackground).replace('<ol>', "").replace('</ol>', "").replace('<li>', "").replace('</li>', "")
+    remediationBackground = str(remediationBackground).replace('<ul>', "").replace('</ul>', "")
     paragraph = document.add_paragraph(remediationBackground)
     paragraph_format = paragraph.paragraph_format
     #formatting to keep our vulns together instead of line breaks
