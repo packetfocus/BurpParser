@@ -52,3 +52,9 @@ Haven't tested using full paths yet, so until its tested use paths for -i and -o
 The xml/ and output/ directories are created by default.
 
         python BurpXMLParser.py -i xml\auth-scan-1.xml -o output\josh_out.docx
+        
+        
+# Tested
+        -Tested on Windows 10 with python 3 (WORKING)
+        -NotTested on Linux
+        -NotTested on Mac
