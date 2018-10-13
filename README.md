@@ -52,7 +52,7 @@ Options:
 
 # ISSUES!?!
 
-Haven't tested using full paths yet, so until its tested use paths for -i and -o as shown below. 
+Haven't tested using full paths yet, so until its tested use paths for -i , -c and -o as shown below. 
 The xml/ and output/ directories are created by default.
 
         python BurpXMLParser.py -i xml\auth-scan-1.xml -o output\josh_out.docx -c output\outfile.csv
@@ -63,3 +63,12 @@ The xml/ and output/ directories are created by default.
         -Tested on Windows 10 with python 3 (WORKING)
         -NotTested on Linux
         -NotTested on Mac
+        
+# Known Constraints
+        This only works on a single xml input file at a time.
+        
+ # TO DO
+ 
+    Need to Add a -dir option when multiple .xml files 
+        are to be translated to .csv and .doc. Currently only supports a single in and out file.
+        
