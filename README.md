@@ -67,6 +67,12 @@ The xml/ and output/ directories are created by default.
         -NotTested on Linux
         -NotTested on Mac
         
+# Examples
+
+   There is an example .xml file in the examples/ folder.
+    
+           python BurpXMLParser.py -i examples\vuln_app_example.xml -o output\exampleOut.doc -c output\exampleOut.csv  
+        
 # Known Constraints
         This only works on a single xml input file at a time.
         

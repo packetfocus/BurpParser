@@ -100,7 +100,7 @@ def buildWordDoc(name, severity, host,  ip, path, location, issueBackground, iss
     severity = severity.title()
     build_header = '{} ({})'.format(name, severity)
     status_logger.info('Creating Issue: {}'.format(build_header))
-    document.add_heading(build_header, level=1)
+    document.add_heading(build_header, level=2)
     # added severity to issue title
     #document.add_heading("Severity:", level=3)
     #paragraph = document.add_paragraph(severity)
@@ -155,11 +155,17 @@ def buildWordDoc(name, severity, host,  ip, path, location, issueBackground, iss
     remediationBackground= str(remediationBackground).replace('&quot;', " ").replace('<b>', "").replace('</b>', "")
     remediationBackground = str(remediationBackground).replace('&nbsp', " ").replace('</table>', " ").replace('<table>', " ")
     remediationBackground = str(remediationBackground).replace('<ol>', "").replace('</ol>', "").replace('<li>', "").replace('</li>', "")
-    remediationBackground = str(remediationBackground).replace('<ul>', "").replace('</ul>', "")
+    remediationBackground = str(remediationBackground).replace('<ul>', "").replace('</ul>', "").replace('<i>', "")
+    remediationBackground = remediationBackground.replace('</i>', "").replace('<i>', "").replace('<i>every</i>', 'every')
+
     paragraph = document.add_paragraph(remediationBackground)
+    #add blank line to end of issue
+    paragraph = document.add_paragraph(' ')
+    paragraph = document.add_paragraph(' ')
     paragraph_format = paragraph.paragraph_format
     #formatting to keep our vulns together instead of line breaks
     paragraph_format.keep_together
+
 
 
 
