@@ -25,7 +25,8 @@ Requires Python Docx
 # USAGE
 *Provide the single .xml input file to be used, and the Word Output file.
 
-    python BurpXMLParser.py -i xml\auth-scan-1.xml -o output\josh_out.docx
+    python BurpXMLParser.py -i xml\auth-scan-1.xml -o output\josh_out.docx -c output\outfile.csv
+
 
 
 C:\code\BurpParser>python BurpXMLParser.py -help
@@ -39,11 +40,14 @@ Usage: BurpXMLParser.py [options]
 
 Options:
 
-      -h, --help            show this help message and exit
-      -i XML_INPUTFILE, --xml-inputFile=XML_INPUTFILE
+    -h, --help            show this help message and exit
+    -i XML_INPUTFILE, --xml-inputFile=XML_INPUTFILE
                         *[REQUIRED]: Specify XML Input File
-      -o DOC_OUTPUTFILE, --word-outputFile=DOC_OUTPUTFILE
+    -o DOC_OUTPUTFILE, --word-outputFile=DOC_OUTPUTFILE
                         *[REQUIRED]: Specify WORD .Doc/Docx Output File
+    -c CSV_OUTPUTFILE, --csv-outputFile=CSV_OUTPUTFILE
+                        *[REQUIRED]: Specify CSV Output File
+
 
 
 # ISSUES!?!
@@ -51,7 +55,8 @@ Options:
 Haven't tested using full paths yet, so until its tested use paths for -i and -o as shown below. 
 The xml/ and output/ directories are created by default.
 
-        python BurpXMLParser.py -i xml\auth-scan-1.xml -o output\josh_out.docx
+        python BurpXMLParser.py -i xml\auth-scan-1.xml -o output\josh_out.docx -c output\outfile.csv
+
         
         
 # Tested
