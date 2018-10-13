@@ -297,6 +297,9 @@ def writeCSV(csvFile):
     writer.writerows(issueList)
 
 def processMultipleXmls(dir):
+    if not dir:
+        status_logger.critical('Supplied Dir for XML Import is blank and/or -i has not been supplied')
+        exit(1)
     if not os.path.isdir(dir):
         #os.path.isdir
         status_logger.critical('XML Dir Specified Doesnt Exist: {}'.format(dir))
@@ -340,10 +343,10 @@ def main():
 
 
     if not cli_XMLFILE or cli_XMLFILE == 'None':
-        if cli_XMLPROCESSDIR == 'None':
+        if not cli_XMLPROCESSDIR:
             status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED!. Use -i xmlFile.xml ')
             exit(1)
-    if cli_XMLFILE and cli_XMLPROCESSDIR != 'None':
+    if cli_XMLFILE and cli_XMLPROCESSDIR:
         status_logger.critical('INPUT XML FILE SET AND INPUT DIR SET. Choose only 1 Bruh! ')
         exit(1)
     if not cli_WORDFILE or cli_WORDFILE == 'None' or '.doc' not in cli_WORDFILE:
@@ -354,11 +357,11 @@ def main():
         status_logger.critical('OUTPUT CSV FILE NOT FOUND OR SUPPLIED.')
         status_logger.critical('CSV Format! Use -c outFile.csv')
         exit(1)
-    if cli_XMLPROCESSDIR == 'None':
+    if not cli_XMLPROCESSDIR:
         status_logger.info('Xml DIR Import not selected')
         status_logger.debug('XML Dir Import Cli ARG : {}'.format(cli_XMLPROCESSDIR))
         process(xmlFileIn)
-    if cli_XMLPROCESSDIR != 'None':
+    if cli_XMLPROCESSDIR:
         status_logger.info('Xml DIR Import Selected! : {}'.format(cli_XMLPROCESSDIR))
         status_logger.debug('XML Dir Import Cli ARG : {}'.format(cli_XMLPROCESSDIR))
         processMultipleXmls(cli_XMLPROCESSDIR)
