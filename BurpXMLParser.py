@@ -261,7 +261,7 @@ def process(xmlInFile):
                   vulnerabilityClassification, issueDetail)
         issueList.append(result)
     status_logger.info('{} issues to report on'.format(len(issueList)))
-    logger.info('{} issues to report on'.format(len(issueList)))
+    #logger.info('{} issues to report on'.format(len(issueList)))
     status_logger.info('Successfully Generate Data for Word Doc Creation')
 
 
@@ -288,15 +288,16 @@ def writeCSV():
 
 def main():
     parser = optparse.OptionParser()
-    parser.add_option('-i', '--xml-inputFile', help='Specify XML Input File', dest='xml_inputFile')
+    parser.add_option('-i', '--xml-inputFile', help='*[REQUIRED]: Specify XML Input File', dest='xml_inputFile')
+    parser.add_option('-i', '--xml-inputFile', help='*[REQUIRED]: Specify XML Input File', dest='xml_inputFile')
     (options, args) = parser.parse_args()
     cli_XMLFILE = options.xml_inputFile
-    status_logger.critical('cli_XMLFILE is Set to {}'.format(cli_XMLFILE))
+    status_logger.debug('cli_XMLFILE is Set to {}'.format(cli_XMLFILE))
 
     #cli_XMLFILE =  sys.argv[1]
     xmlFileIn = cli_XMLFILE
-    if not cli_XMLFILE:
-        status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED')
+    if not cli_XMLFILE or cli_XMLFILE == 'None':
+        status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED. Use -i xmlFilexml ')
         exit(1)
     #status_logger.info('Command line XML Input file {}'.format(options.xml_inputFile))
     logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
