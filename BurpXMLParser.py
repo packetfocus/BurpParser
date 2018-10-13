@@ -83,7 +83,8 @@ def strip_tags(html):
     return s.get_data()
 
 
-def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground):
+def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground,
+                 vulnerabilityClassification):
     # refer to https://python-docx.readthedocs.io/en/latest/
     # we init the doc at the start of this script
     # then save it in the main function after everything is built.
@@ -114,7 +115,7 @@ def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issu
     # Build Our header format here.
     build_header = '{} ({})'.format(name, severity)
     status_logger.info('Creating Issue: {}'.format(build_header))
-    document.add_heading(build_header, level=2)
+    document.add_heading(build_header, level=1)
     document.add_heading("Vulnerable Host:", level=3)
     paragraph = document.add_paragraph(host)
     document.add_heading("Vulnerable URL:", level=3)
@@ -150,10 +151,16 @@ def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issu
 
     document.add_heading("Recommendation:", level=3)
     remediationBackground = strip_tags(remediationBackground)
+    remediationBackground = str(remediationBackground).replace('","', ',')
     paragraph = document.add_paragraph(remediationBackground)
+
+    document.add_heading("Additional Information:", level=3)
+    #remediationBackground = strip_tags(remediationBackground)
+    paragraph = document.add_paragraph(vulnerabilityClassification)
+
     # add blank line to end of issue
-    paragraph = document.add_paragraph(' ')
-    paragraph = document.add_paragraph(' ')
+    #paragraph = document.add_paragraph(' ')
+    #paragraph = document.add_paragraph(' ')
     paragraph_format = paragraph.paragraph_format
     # formatting to keep our vulns together instead of line breaks
     paragraph_format.keep_together
@@ -197,16 +204,21 @@ def process(xmlInFile):
             remediationBackground = i.find('remediationbackground').text
             remediationBackground = str(remediationBackground)
             remediationBackground = strip_tags(remediationBackground)
+            remediationBackground = remediationBackground.replace(',', '","')
 
         except:
             remediationBackground = 'BLANK'
             status_logger.error('Remediation Background is BLANK')
 
+
         try:
             vulnerabilityClassification = i.find('vulnerabilityclassifications').text
-            vulnerabilityClassification = str(vulnerabilityClassification)
-            # Note: THis will clean HTML but also remove link, so we just get vuln name.
+
             vulnerabilityClassification = strip_tags(vulnerabilityClassification)
+            status_logger.debug('Vuln Classification: {}'.format(vulnerabilityClassification))
+
+            # Note: THis will clean HTML but also remove link, so we just get vuln name.
+            #vulnerabilityClassification = strip_tags(vulnerabilityClassification)
 
         except:
             vulnerabilityClassification = 'BLANK'
@@ -244,7 +256,8 @@ def process(xmlInFile):
             status_logger.error('Issue Detail is blank for {}'.format(issueDetail))
 
         # build our word document here
-        buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground)
+        buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground,
+                     vulnerabilityClassification)
 
         """
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
