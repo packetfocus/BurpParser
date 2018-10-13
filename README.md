@@ -45,3 +45,10 @@ Options:
       -o DOC_OUTPUTFILE, --word-outputFile=DOC_OUTPUTFILE
                         *[REQUIRED]: Specify WORD .Doc/Docx Output File
 
+
+# ISSUES!?!
+
+Haven't tested using full paths yet, so until its tested use paths for -i and -o as shown below. 
+The xml/ and output/ directories are created by default.
+
+        python BurpXMLParser.py -i xml\auth-scan-1.xml -o output\josh_out.docx
