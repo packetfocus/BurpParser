@@ -28,8 +28,11 @@ Requires Python Docx
     python BurpXMLParser.py -i xml\sample.xml
 
 C:\code\BurpParser>python BurpXMLParser.py -help
+
  2018-10-12 19:02 -  INFO - Using XML Input File:
+ 
  2018-10-12 19:02 -  INFO - Creating Word Dcument : output\demo.docx
+ 
 Usage: BurpXMLParser.py [options]
 
 Options:
