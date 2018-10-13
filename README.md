@@ -7,6 +7,8 @@
 # Install
 
     pip install -r requirements.txt
+   Then:
+    python BurpXMLParser.py -i examples\vuln_app_example.xml -o output\exampleOut.doc -c output\exampleOut.csv
 
 # Requirements
     Requires Python 3.x
