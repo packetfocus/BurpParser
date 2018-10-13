@@ -1,16 +1,12 @@
-# Burp Pro XML parser
-# Converts to CSV and makes a Word Template
-
+from html.parser import HTMLParser
 from docx import Document
 from docx.shared import Inches
-# from BeautifulSoup import BeautifulSoup
 from bs4 import BeautifulSoup
 import csv
 import base64
 import os
 import optparse
 import sys
-
 import logging
 import logging.config
 from logging.config import fileConfig
@@ -21,8 +17,6 @@ LOGGING_LEVELS = {'critical': logging.CRITICAL,
                   'info': logging.INFO,
                   'debug': logging.DEBUG}
 
-
-#logging conf gile
 logging.config.fileConfig('logging.conf')
 
 # create logger
@@ -36,24 +30,21 @@ global docOutFile
 global cli_XMLFILE
 global cli_WORDFILE
 global cli_CSVFILE
+
+# define Cli variables for our ARGs
 cli_XMLFILE = ""
 cli_WORDFILE = ""
 cli_CSVFILE = ""
 
 # Set input and output files
-#xmlFileIn = 'xml\sample.xml'
 xmlFileIn = cli_XMLFILE
-
-
-
-#docOutFile = os.path.join('output', 'demo.docx')
 docOutFile = cli_WORDFILE
-
 
 # init Document
 document = Document()
 
 """
+Basic Layout of Word DOc
 
 {TITLE HEADER} ({Risk Level})
 
@@ -72,49 +63,69 @@ document = Document()
 """
 
 
-def buildWordDoc(name, severity, host,  ip, path, location, issueBackground, issueDetail, remediationBackground):
+class MLStripper(HTMLParser):
+
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.fed = []
+
+    def handle_data(self, d):
+        self.fed.append(d)
+
+    def get_data(self):
+        return ''.join(self.fed)
+
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
+
+
+def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground):
     # refer to https://python-docx.readthedocs.io/en/latest/
     # we init the doc at the start of this script
-    #then save it in the main function after everything is built.
+    # then save it in the main function after everything is built.
     location = str(location)
     orig_location = location
-
     loc_count = location.count('/')
     status_logger.debug('Location String {} location count : {}'.format(location, loc_count))
+    # this is a word formatting fix. If the location is / then we add host URL.
     if loc_count < 2:
         status_logger.debug('Location/Path is Default "/" ')
-        #full_location = os.path.join(host, location)
+        # full_location = os.path.join(host, location)
         full_location = host + location
         location = full_location
     status_logger.debug('Location is Now {}'.format(location))
-    #reformat data if needed
+    # reformat data if needed
+    # cheap oncoding of the comma by replacing it with |.
+    # probably need to move all these to after we pass data to the word function.
+    # then the commas could be fixed for building the CSV.
+
     issueBackground = str(issueBackground).replace('|', ',')
-    remediationBackground = str(remediationBackground).replace('</p>', '')
-
-
-    # init Document
-    #document = Document()
+    remediationBackground = str(remediationBackground)
+    # strip HTML tags using our function instead of string replacements inline.
+    remediationBackground = strip_tags(remediationBackground)
     severity = str(severity)
     severity = severity + ' Risk'
     # use title to fix Capitals
     severity = severity.title()
+    # Build Our header format here.
     build_header = '{} ({})'.format(name, severity)
     status_logger.info('Creating Issue: {}'.format(build_header))
     document.add_heading(build_header, level=2)
-    # added severity to issue title
-    #document.add_heading("Severity:", level=3)
-    #paragraph = document.add_paragraph(severity)
     document.add_heading("Vulnerable Host:", level=3)
     paragraph = document.add_paragraph(host)
     document.add_heading("Vulnerable URL:", level=3)
+    # fixing location string so HTTP isnt included twice.
     if 'http' in location:
         location = orig_location
     host_url = host + location
     paragraph = document.add_paragraph(host_url)
     document.add_heading("Technical Details:", level=3)
     table = document.add_table(rows=1, cols=2)
-
-
+    # adjusted cell alignment here manually.
     hdr_cells = table.rows[0].cells
     hdr_cells[0].text = 'IP:'
     hdr_cells[0].width = Inches(.00)
@@ -128,45 +139,24 @@ def buildWordDoc(name, severity, host,  ip, path, location, issueBackground, iss
     row_cells[1].width = Inches(.5)
     row_cells[1].left_margin = .1
 
-
-    #for cell in table.rows[0].cells:
-        #cell.width = Inches(.4)
-
-
-
-    #document.add_heading("IP:", level=3)
-    #paragraph = document.add_paragraph(ip)
     document.add_heading("Overview:", level=3)
-    issueBackground = issueBackground.replace('<ol>', "").replace('</ol>', "").replace('<li>', "").replace('</li>', "")
-    issueBackground = issueBackground.replace('<ul>', "").replace('</ul>', "").replace('<br>', "").replace('</br>', "")
+    issueBackground = strip_tags(issueBackground)
     paragraph = document.add_paragraph(issueBackground)
 
     document.add_heading("Evidence:", level=3)
-    issueDetail = str(issueDetail).replace('<br>', "").replace('<strong>', "").replace('</strong>', "")
-    issueDetail = issueDetail.replace("</td>", "").replace('</tr>', "").replace('<tr>', "").replace('<td>', "")
-    issueDetail = issueDetail.replace('<b>', "").replace('</b>', "").replace('<h4>', "").replace('</h4>', "")
-    issueDetail = issueDetail.replace('&nbsp', " ").replace('</table>', " ").replace('<table>', " ")
-    issueDetail = issueDetail.replace('<ol>', "").replace('</ol>', "").replace('<li>', "").replace('</li>', "")
-    issueDetail = issueDetail.replace('<ul>', "").replace('</ul>', "")
-    # replace the commas we decoded
+    issueDetail = strip_tags(issueDetail)
     issueDetail = issueDetail.replace('","', "")
     paragraph = document.add_paragraph(issueDetail)
-    document.add_heading("Recommendation:", level=3)
-    remediationBackground= str(remediationBackground).replace('&quot;', " ").replace('<b>', "").replace('</b>', "")
-    remediationBackground = str(remediationBackground).replace('&nbsp', " ").replace('</table>', " ").replace('<table>', " ")
-    remediationBackground = str(remediationBackground).replace('<ol>', "").replace('</ol>', "").replace('<li>', "").replace('</li>', "")
-    remediationBackground = str(remediationBackground).replace('<ul>', "").replace('</ul>', "").replace('<i>', "")
-    remediationBackground = remediationBackground.replace('</i>', "").replace('<i>', "").replace('<i>every</i>', 'every')
 
+    document.add_heading("Recommendation:", level=3)
+    remediationBackground = strip_tags(remediationBackground)
     paragraph = document.add_paragraph(remediationBackground)
-    #add blank line to end of issue
+    # add blank line to end of issue
     paragraph = document.add_paragraph(' ')
     paragraph = document.add_paragraph(' ')
     paragraph_format = paragraph.paragraph_format
-    #formatting to keep our vulns together instead of line breaks
+    # formatting to keep our vulns together instead of line breaks
     paragraph_format.keep_together
-
-
 
 
 def process(xmlInFile):
@@ -176,7 +166,7 @@ def process(xmlInFile):
     issueList = []
     # inputfile for the XML
     # THIS WILL BREAK IS YOU CHANGE HTML.PARSER!
-    #try:
+    # try:
     if not os.path.isfile(xmlFileIn):
         status_logger.critical('Cant open XML! {}'.format(xmlInFile))
         exit(1)
@@ -197,14 +187,16 @@ def process(xmlInFile):
         severity = i.find('severity').text
         confidence = i.find('confidence').text
         issueBackground = i.find('issuebackground').text
-        issueBackground = str(issueBackground).replace('<p>', "").replace('</p>', "")
+        issueBackground = str(issueBackground)
         # have to replace commas before making csv. Replaced with | for now.
+        issueBackground = strip_tags(issueBackground)
+        # this was a fix for the CSV outfile. Need to rethink the order of this.
         issueBackground = issueBackground.replace(',', "|")
 
         try:
             remediationBackground = i.find('remediationbackground').text
-            remediationBackground = str(remediationBackground).replace('<p>', "")
-
+            remediationBackground = str(remediationBackground)
+            remediationBackground = strip_tags(remediationBackground)
 
         except:
             remediationBackground = 'BLANK'
@@ -212,55 +204,47 @@ def process(xmlInFile):
 
         try:
             vulnerabilityClassification = i.find('vulnerabilityclassifications').text
-            vulnerabilityClassification = str(vulnerabilityClassification).replace("<ul>", "").replace("</ul>", "")
-            vulnerabilityClassification = vulnerabilityClassification.replace("\n", "")
+            vulnerabilityClassification = str(vulnerabilityClassification)
+            # Note: THis will clean HTML but also remove link, so we just get vuln name.
+            vulnerabilityClassification = strip_tags(vulnerabilityClassification)
 
         except:
             vulnerabilityClassification = 'BLANK'
             status_logger.error('Vuln Classification is BLANK')
 
         try:
-            # print(request)
-            # request = base64.b64decode(i.find('requestresponse').find('request').text)
-            # print('Decoding Request:')
             request = i.find('requestresponse').find('request').text
             request = base64.b64decode(request)
             request = str(request)
             request = response.replace(',', '","')
-            # print(request)
+
         except:
             request = 'BLANK'
             status_logger.error('Request is blank for {}'.format(request))
 
         try:
-            # print(response)
-            # print('Decoding Response:')
             response = i.find('requestresponse').find('response').text
             response = base64.b64decode(response)
             response = str(response)
             response = response.replace(',', '","')
-            # print(response)
 
         except:
             response = 'BLANK'
             status_logger.error('Response is blank for {}'.format(response))
 
         try:
-            # print(response)
-            # print('Issue Detail:')
-            issueDetail = i.find('issuedetail').text
-            issueDetail = str(issueDetail).replace(',', '","')
 
+            issueDetail = i.find('issuedetail').text
+            # Not consistent with the comma encoding.
+            issueDetail = str(issueDetail).replace(',', '","')
 
 
         except:
             issueDetail = 'BLANK'
             status_logger.error('Issue Detail is blank for {}'.format(issueDetail))
 
-        #build our word document here
+        # build our word document here
         buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground)
-
-
 
         """
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
@@ -271,13 +255,12 @@ def process(xmlInFile):
                   vulnerabilityClassification, issueDetail)
         issueList.append(result)
     status_logger.info('{} issues to report on'.format(len(issueList)))
-    #logger.info('{} issues to report on'.format(len(issueList)))
     status_logger.info('Successfully Generate Data for Word Doc Creation')
 
 
 def writeCSV(csvFile):
     outfile = 'NOTSET'
-    #csvFile = 'NOTSET'
+    # csvFile = 'NOTSET'
     cwd = os.getcwd()
     csvFile = os.path.join(cwd, csvFile)
     status_logger.info('Saving to CSV file: {}'.format(csvFile))
@@ -313,12 +296,12 @@ def main():
     cli_CSVFILE = options.csv_outputFile
     status_logger.info('Using XML Input File: {}'.format(cli_XMLFILE))
     status_logger.info('Creating Word Dcument : {}'.format(cli_WORDFILE))
-
     status_logger.debug('cli_XMLFILE is Set to {}'.format(cli_XMLFILE))
     status_logger.debug('cli_WORDFILE is Set to {}'.format(cli_WORDFILE))
-    #cli_XMLFILE =  sys.argv[1]
+    # cli_XMLFILE =  sys.argv[1]
     xmlFileIn = cli_XMLFILE
     docOutFile = cli_WORDFILE
+
     if not cli_XMLFILE or cli_XMLFILE == 'None':
         status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED. Use -i xmlFile.xml ')
         exit(1)
@@ -331,20 +314,14 @@ def main():
         status_logger.critical('CSV Format! Use -c outFile.csv')
         exit(1)
 
-    #status_logger.info('Command line XML Input file {}'.format(options.xml_inputFile))
+    # status_logger.info('Command line XML Input file {}'.format(options.xml_inputFile))
     logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
     status_logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
-
     process(xmlFileIn)
     writeCSV(cli_CSVFILE)
     # Save Word Doc
-
     document.save(docOutFile)
-
     status_logger.info('Task Has Completed')
-
-
-
 
 
 if __name__ == '__main__':
