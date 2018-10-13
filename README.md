@@ -1,5 +1,8 @@
 # BurpParser
     Parser to convert BURP Pro .XML to .CSV and build a Word .Docx Template
+    *NOTE: The order in which the vulns are presented depends on the order they are in 
+    when the .xml file is generated. In Burp Pro, goto Issues and sort them 'High to Low'
+    in the view. That will sort them when put into the Word and CSV document. 
 
 # Install
 

@@ -271,7 +271,7 @@ def process(xmlInFile):
 
 def writeCSV(csvFile):
     outfile = 'NOTSET'
-    csvFile = 'NOTSET'
+    #csvFile = 'NOTSET'
     cwd = os.getcwd()
     csvFile = os.path.join(cwd, csvFile)
     status_logger.info('Saving to CSV file: {}'.format(csvFile))
