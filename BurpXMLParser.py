@@ -35,8 +35,10 @@ global xmlFileIn
 global docOutFile
 global cli_XMLFILE
 global cli_WORDFILE
+global cli_CSVFILE
 cli_XMLFILE = ""
 cli_WORDFILE = ""
+cli_CSVFILE = ""
 
 # Set input and output files
 #xmlFileIn = 'xml\sample.xml'
@@ -267,15 +269,19 @@ def process(xmlInFile):
     status_logger.info('Successfully Generate Data for Word Doc Creation')
 
 
-def writeCSV():
+def writeCSV(csvFile):
     outfile = 'NOTSET'
+    csvFile = 'NOTSET'
+    cwd = os.getcwd()
+    csvFile = os.path.join(cwd, csvFile)
+    status_logger.info('Saving to CSV file: {}'.format(csvFile))
     # need to fix this logic, still fires error instead of except:
     try:
-        outfile = open("output/burpOutput.csv", "w", newline='')
+        outfile = open(csvFile, "w", newline='')
     except:
         status_logger.critical('Cant open CSV outfile : {}'.format(outfile))
 
-    status_logger.info('Writing to CSV'.format(outfile))
+    status_logger.info('Writing to CSV'.format(csvFile))
     writer = csv.writer(outfile, delimiter=',')
     """
     writer.writerow(
@@ -291,10 +297,14 @@ def writeCSV():
 def main():
     parser = optparse.OptionParser()
     parser.add_option('-i', '--xml-inputFile', help='*[REQUIRED]: Specify XML Input File', dest='xml_inputFile')
-    parser.add_option('-o', '--word-outputFile', help='*[REQUIRED]: Specify WORD .Doc/Docx Output File', dest='doc_outputFile')
+    parser.add_option('-o', '--word-outputFile', help='*[REQUIRED]: Specify WORD .Doc/Docx Output File',
+                      dest='doc_outputFile')
+    parser.add_option('-c', '--csv-outputFile', help='*[REQUIRED]: Specify CSV Output File',
+                      dest='csv_outputFile')
     (options, args) = parser.parse_args()
     cli_XMLFILE = options.xml_inputFile
     cli_WORDFILE = options.doc_outputFile
+    cli_CSVFILE = options.csv_outputFile
     status_logger.info('Using XML Input File: {}'.format(cli_XMLFILE))
     status_logger.info('Creating Word Dcument : {}'.format(cli_WORDFILE))
 
@@ -310,13 +320,17 @@ def main():
         status_logger.critical('OUTPUT WORD FILE NOT FOUND OR SUPPLIED.')
         status_logger.critical('Doc/Docx Format! Use -o word.doc{word.docx}')
         exit(1)
+    if not cli_CSVFILE or cli_CSVFILE == 'None' or '.csv' not in cli_CSVFILE:
+        status_logger.critical('OUTPUT CSV FILE NOT FOUND OR SUPPLIED.')
+        status_logger.critical('CSV Format! Use -c outFile.csv')
+        exit(1)
 
     #status_logger.info('Command line XML Input file {}'.format(options.xml_inputFile))
     logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
     status_logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
 
     process(xmlFileIn)
-    writeCSV()
+    writeCSV(cli_CSVFILE)
     # Save Word Doc
 
     document.save(docOutFile)
