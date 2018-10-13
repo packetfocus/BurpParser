@@ -34,7 +34,9 @@ global issueList
 global xmlFileIn
 global docOutFile
 global cli_XMLFILE
+global cli_WORDFILE
 cli_XMLFILE = ""
+cli_WORDFILE = ""
 
 # Set input and output files
 #xmlFileIn = 'xml\sample.xml'
@@ -42,9 +44,9 @@ xmlFileIn = cli_XMLFILE
 
 
 
-docOutFile = os.path.join('output', 'demo.docx')
-status_logger.info('Using XML Input File: {}'.format(xmlFileIn))
-status_logger.info('Creating Word Dcument : {}'.format(docOutFile))
+#docOutFile = os.path.join('output', 'demo.docx')
+docOutFile = cli_WORDFILE
+
 
 # init Document
 document = Document()
@@ -289,15 +291,23 @@ def writeCSV():
 def main():
     parser = optparse.OptionParser()
     parser.add_option('-i', '--xml-inputFile', help='*[REQUIRED]: Specify XML Input File', dest='xml_inputFile')
-    parser.add_option('-i', '--xml-inputFile', help='*[REQUIRED]: Specify XML Input File', dest='xml_inputFile')
+    parser.add_option('-o', '--word-outputFile', help='*[REQUIRED]: Specify WORD .Doc/Docx Output File', dest='doc_outputFile')
     (options, args) = parser.parse_args()
     cli_XMLFILE = options.xml_inputFile
-    status_logger.debug('cli_XMLFILE is Set to {}'.format(cli_XMLFILE))
+    cli_WORDFILE = options.doc_outputFile
+    status_logger.info('Using XML Input File: {}'.format(cli_XMLFILE))
+    status_logger.info('Creating Word Dcument : {}'.format(cli_WORDFILE))
 
+    status_logger.debug('cli_XMLFILE is Set to {}'.format(cli_XMLFILE))
+    status_logger.debug('cli_WORDFILE is Set to {}'.format(cli_WORDFILE))
     #cli_XMLFILE =  sys.argv[1]
     xmlFileIn = cli_XMLFILE
+    docOutFile = cli_WORDFILE
     if not cli_XMLFILE or cli_XMLFILE == 'None':
-        status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED. Use -i xmlFilexml ')
+        status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED. Use -i xmlFile.xml ')
+        exit(1)
+    if not cli_WORDFILE or cli_WORDFILE == 'None':
+        status_logger.critical('OUTPUT WORD FILE NOT FOUND OR SUPPLIED. Use -o word.doc ')
         exit(1)
     #status_logger.info('Command line XML Input file {}'.format(options.xml_inputFile))
     logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
