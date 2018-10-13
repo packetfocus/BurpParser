@@ -306,9 +306,11 @@ def main():
     if not cli_XMLFILE or cli_XMLFILE == 'None':
         status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED. Use -i xmlFile.xml ')
         exit(1)
-    if not cli_WORDFILE or cli_WORDFILE == 'None':
-        status_logger.critical('OUTPUT WORD FILE NOT FOUND OR SUPPLIED. Use -o word.doc ')
+    if not cli_WORDFILE or cli_WORDFILE == 'None' or '.doc' not in cli_WORDFILE:
+        status_logger.critical('OUTPUT WORD FILE NOT FOUND OR SUPPLIED.')
+        status_logger.critical('Doc/Docx Format! Use -o word.doc{word.docx}')
         exit(1)
+
     #status_logger.info('Command line XML Input file {}'.format(options.xml_inputFile))
     logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
     status_logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
