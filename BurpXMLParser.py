@@ -30,12 +30,13 @@ global docOutFile
 global cli_XMLFILE
 global cli_WORDFILE
 global cli_CSVFILE
+global cli_XMLPROCESSDIR
 
 # define Cli variables for our ARGs
 cli_XMLFILE = ""
 cli_WORDFILE = ""
 cli_CSVFILE = ""
-
+cli_XMLPROCESSDIR = ""
 # Set input and output files
 xmlFileIn = cli_XMLFILE
 docOutFile = cli_WORDFILE
@@ -297,14 +298,23 @@ def writeCSV(csvFile):
 
 def processMultipleXmls(dir):
     if not os.path.isdir(dir):
+        #os.path.isdir
         status_logger.critical('XML Dir Specified Doesnt Exist: {}'.format(dir))
+        exit(1)
     xmlList=[]
-    xmlList=os.listdir(dir)
+    try:
+        xmlList=os.listdir(dir)
+    except:
+        status_logger.error('The XML Process Dir must be blank : {}'.format(dir))
 
     for xmlFile in xmlList:
-        status_logger.info('Found XML File {} in {}'.format(xmlFile, dir))
-        xmlFile_path = os.path.join(dir,xmlFile)
-        process(xmlFile_path)
+        if not xmlFile.endswith('.xml'):
+            status_logger.error('Attempting to Parse non-xml file. Skipping {}'.format(xmlFile))
+        if xmlFile.endswith('.xml'):
+            status_logger.info('Found XML File {} in {}'.format(xmlFile, dir))
+            xmlFile_path = os.path.join(dir, xmlFile)
+            status_logger.debug('Processing XML file: {}'.format(xmlFile_path))
+            process(xmlFile_path)
 
 
 def main():
@@ -326,10 +336,16 @@ def main():
     xmlFileIn = cli_XMLFILE
     docOutFile = cli_WORDFILE
 
-    if cli_XMLPROCESSDIR == 'None':
-        if not cli_XMLFILE or cli_XMLFILE == 'None':
-            status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED. Use -i xmlFile.xml ')
+
+
+
+    if not cli_XMLFILE or cli_XMLFILE == 'None':
+        if cli_XMLPROCESSDIR == 'None':
+            status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED!. Use -i xmlFile.xml ')
             exit(1)
+    if cli_XMLFILE and cli_XMLPROCESSDIR != 'None':
+        status_logger.critical('INPUT XML FILE SET AND INPUT DIR SET. Choose only 1 Bruh! ')
+        exit(1)
     if not cli_WORDFILE or cli_WORDFILE == 'None' or '.doc' not in cli_WORDFILE:
         status_logger.critical('OUTPUT WORD FILE NOT FOUND OR SUPPLIED.')
         status_logger.critical('Doc/Docx Format! Use -o word.doc{word.docx}')
