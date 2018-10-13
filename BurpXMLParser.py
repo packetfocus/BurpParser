@@ -295,6 +295,17 @@ def writeCSV(csvFile):
          "Vulnerability Classification", "Issue Details"])
     writer.writerows(issueList)
 
+def processMultipleXmls(dir):
+    if not os.path.isdir(dir):
+        status_logger.critical('XML Dir Specified Doesnt Exist: {}'.format(dir))
+    xmlList=[]
+    xmlList=os.listdir(dir)
+
+    for xmlFile in xmlList:
+        status_logger.info('Found XML File {} in {}'.format(xmlFile, dir))
+        xmlFile_path = os.path.join(dir,xmlFile)
+        process(xmlFile_path)
+
 
 def main():
     parser = optparse.OptionParser()
@@ -303,21 +314,22 @@ def main():
                       dest='doc_outputFile')
     parser.add_option('-c', '--csv-outputFile', help='*[REQUIRED]: Specify CSV Output File',
                       dest='csv_outputFile')
+    parser.add_option('-d', '--xml-directoryImport', help='[OPTIONAL]: Provide just a DIR to process all xml files',
+                      dest='xml_processDir')
     (options, args) = parser.parse_args()
     cli_XMLFILE = options.xml_inputFile
     cli_WORDFILE = options.doc_outputFile
     cli_CSVFILE = options.csv_outputFile
-    status_logger.info('Using XML Input File: {}'.format(cli_XMLFILE))
-    status_logger.info('Creating Word Dcument : {}'.format(cli_WORDFILE))
-    status_logger.debug('cli_XMLFILE is Set to {}'.format(cli_XMLFILE))
-    status_logger.debug('cli_WORDFILE is Set to {}'.format(cli_WORDFILE))
+    cli_XMLPROCESSDIR = options.xml_processDir
+
     # cli_XMLFILE =  sys.argv[1]
     xmlFileIn = cli_XMLFILE
     docOutFile = cli_WORDFILE
 
-    if not cli_XMLFILE or cli_XMLFILE == 'None':
-        status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED. Use -i xmlFile.xml ')
-        exit(1)
+    if cli_XMLPROCESSDIR == 'None':
+        if not cli_XMLFILE or cli_XMLFILE == 'None':
+            status_logger.critical('INPUT XML FILE NOT FOUND OR SUPPLIED. Use -i xmlFile.xml ')
+            exit(1)
     if not cli_WORDFILE or cli_WORDFILE == 'None' or '.doc' not in cli_WORDFILE:
         status_logger.critical('OUTPUT WORD FILE NOT FOUND OR SUPPLIED.')
         status_logger.critical('Doc/Docx Format! Use -o word.doc{word.docx}')
@@ -326,11 +338,23 @@ def main():
         status_logger.critical('OUTPUT CSV FILE NOT FOUND OR SUPPLIED.')
         status_logger.critical('CSV Format! Use -c outFile.csv')
         exit(1)
-
+    if cli_XMLPROCESSDIR == 'None':
+        status_logger.info('Xml DIR Import not selected')
+        status_logger.debug('XML Dir Import Cli ARG : {}'.format(cli_XMLPROCESSDIR))
+        process(xmlFileIn)
+    if cli_XMLPROCESSDIR != 'None':
+        status_logger.info('Xml DIR Import Selected! : {}'.format(cli_XMLPROCESSDIR))
+        status_logger.debug('XML Dir Import Cli ARG : {}'.format(cli_XMLPROCESSDIR))
+        processMultipleXmls(cli_XMLPROCESSDIR)
     # status_logger.info('Command line XML Input file {}'.format(options.xml_inputFile))
-    logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
+    #logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
     status_logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
-    process(xmlFileIn)
+    status_logger.info('Using XML Input File: {}'.format(cli_XMLFILE))
+    status_logger.info('Output Word Document : {}'.format(cli_WORDFILE))
+    status_logger.info('Output CSV Document : {}'.format(cli_CSVFILE))
+    status_logger.debug('cli_XMLFILE is Set to {}'.format(cli_XMLFILE))
+    status_logger.debug('cli_WORDFILE is Set to {}'.format(cli_WORDFILE))
+    status_logger.debug('cli_XMLPROCESSDIR is Set to {}'.format(cli_XMLPROCESSDIR))
     writeCSV(cli_CSVFILE)
     # Save Word Doc
     document.save(docOutFile)
