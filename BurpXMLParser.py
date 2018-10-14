@@ -283,7 +283,7 @@ def process(xmlInFile):
             # after issue gets entered into word.
             vulnList.append(issueLine)
             issue_logger.info(issueLine)
-
+        #logic if issue/vuln has already been reported on.
         if issueLine in str(vulnList):
             issue_logger.warning('{} ({}) Risk: Has already been reported on! Skipping!!'.format(name, severity))
 
