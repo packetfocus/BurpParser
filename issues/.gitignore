@@ -1,0 +1,10 @@
+#ignore doc
+*.doc
+*.docx
+
+#CSV
+*.csv
+
+# log files
+*.log
+*.logs
