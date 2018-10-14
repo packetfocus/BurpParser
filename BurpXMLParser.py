@@ -11,6 +11,12 @@ import logging
 import logging.config
 from logging.config import fileConfig
 
+# clean up
+issue_logFile = os.path.join(os.getcwd(), 'issues', 'created-issues.log')
+if os.path.exists(issue_logFile):
+    os.remove(issue_logFile)
+
+
 LOGGING_LEVELS = {'critical': logging.CRITICAL,
                   'error': logging.ERROR,
                   'warning': logging.WARNING,
@@ -23,6 +29,8 @@ logging.config.fileConfig('logging.conf')
 logger = logging.getLogger()
 status_logger = logging.getLogger('xmlparser.status')
 issues_logger = logging.getLogger('xmlparser.issues')
+issues_logger.info('Cleaned up previous Issues Log File: {}'.format(issue_logFile))
+issues_logger.info('Start Vuln Tracking and Analysis')
 
 #issues_logger.doRollover()
 
@@ -34,6 +42,9 @@ global cli_XMLFILE
 global cli_WORDFILE
 global cli_CSVFILE
 global cli_XMLPROCESSDIR
+global issueList
+
+issueList =[]
 
 # define Cli variables for our ARGs
 cli_XMLFILE = ""
@@ -44,12 +55,10 @@ cli_XMLPROCESSDIR = ""
 xmlFileIn = cli_XMLFILE
 docOutFile = cli_WORDFILE
 
-# clean up
-issue_logFile = os.path.join(os.getcwd(), 'issues', 'created-issues.log')
-if os.path.exists(issue_logFile):
-    os.remove(issue_logFile)
-    issues_logger.info('Cleaned up previous Issues Log File: {}'.format(issue_logFile))
-    issues_logger.info('Start Vuln Tracking and Analysis')
+
+def delFile(file):
+    if os.path.exists(file):
+        os.remove(file)
 
 
 # init Document
@@ -126,13 +135,19 @@ def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issu
     severity = severity.title()
     # Build Our header format here.
     build_header = '{} ({})'.format(name, severity)
-    status_logger.info('Creating Issue: {}'.format(build_header))
+    status_logger.info('Created Issue: {}'.format(build_header))
     issues_logger.info('Creating Issue: {}'.format(build_header))
     # this is right before the header gets written.
+    """
     issue_logFile = os.path.join(os.getcwd(), 'issues', 'created-issues.log')
-    status_logger.info('Found Issues Log file: {}'.format(issue_logFile))
+    #status_logger.info('Found Issues Log file: {}'.format(issue_logFile))
     vulnExistCount = (open(issue_logFile, 'r').read().count(build_header))
-    issues_logger.info('{} Has Been Reported on {} Times'.format(build_header, str(vulnExistCount)))
+    #Here we determined if this is the first time reporting on the vuln or not.
+    if vulnExistCount <= 1:
+        issues_logger.warning('Vulnerability has already been reported on!')
+        return
+    status_logger.info('{} Has Been Reported on {} Times'.format(build_header, str(vulnExistCount)))
+    """
     document.add_heading(build_header, level=1)
     document.add_heading("Vulnerable Host:", level=3)
     paragraph = document.add_paragraph(host)
@@ -188,6 +203,7 @@ def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issu
 
 
 def process(xmlInFile):
+    IssueLIST=[]
     cwd = os.getcwd()
     xmlFileIn = os.path.join(cwd, xmlInFile)
     global issueList
@@ -204,6 +220,15 @@ def process(xmlInFile):
 
     # pull all issue tags from XML
     issues = soup.findAll('issue')
+
+    delFile('temp.txt')
+
+    for x in issues:
+        name = x.find('name').text
+        name = str(name).upper()
+        issueList.append(name)
+        with open('temp.txt' ,'a+') as f2:
+               f2.write(str(name + '\n'))
 
     for i in issues:
         name = i.find('name').text
@@ -274,9 +299,12 @@ def process(xmlInFile):
             issueDetail = 'BLANK'
             status_logger.error('Issue Detail is blank for {}'.format(issueDetail))
 
-        # build our word document here
+
+
+
         buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground,
-                     vulnerabilityClassification)
+                         vulnerabilityClassification)
+
 
         """
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
