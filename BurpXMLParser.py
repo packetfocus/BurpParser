@@ -156,12 +156,15 @@ def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issu
     paragraph = document.add_paragraph(remediationBackground)
 
     document.add_heading("Additional Information:", level=3)
-    #remediationBackground = strip_tags(remediationBackground)
-    paragraph = document.add_paragraph(vulnerabilityClassification)
+    # This is the fix for blank lines in CVE list
+    vulnerabilityClassification = vulnerabilityClassification.split('\n')
+    for i in vulnerabilityClassification:
+        if len(i) > 5:
+            document.add_paragraph(i, style='List Bullet')
 
     # add blank line to end of issue
-    #paragraph = document.add_paragraph(' ')
-    #paragraph = document.add_paragraph(' ')
+    # paragraph = document.add_paragraph(' ')
+    # paragraph = document.add_paragraph(' ')
     paragraph_format = paragraph.paragraph_format
     # formatting to keep our vulns together instead of line breaks
     paragraph_format.keep_together
@@ -173,7 +176,7 @@ def process(xmlInFile):
     global issueList
     issueList = []
     # inputfile for the XML
-    # THIS WILL BREAK IS YOU CHANGE HTML.PARSER!
+    # THIS WILL BREAK IF YOU CHANGE HTML.PARSER!
     # try:
     if not os.path.isfile(xmlFileIn):
         status_logger.critical('Cant open XML! {}'.format(xmlInFile))
@@ -211,15 +214,13 @@ def process(xmlInFile):
             remediationBackground = 'BLANK'
             status_logger.error('Remediation Background is BLANK')
 
-
         try:
             vulnerabilityClassification = i.find('vulnerabilityclassifications').text
-
             vulnerabilityClassification = strip_tags(vulnerabilityClassification)
             status_logger.debug('Vuln Classification: {}'.format(vulnerabilityClassification))
 
             # Note: THis will clean HTML but also remove link, so we just get vuln name.
-            #vulnerabilityClassification = strip_tags(vulnerabilityClassification)
+            # vulnerabilityClassification = strip_tags(vulnerabilityClassification)
 
         except:
             vulnerabilityClassification = 'BLANK'
@@ -296,17 +297,17 @@ def writeCSV(csvFile):
          "Vulnerability Classification", "Issue Details"])
     writer.writerows(issueList)
 
+
 def processMultipleXmls(dir):
     if not dir:
         status_logger.critical('Supplied Dir for XML Import is blank and/or -i has not been supplied')
         exit(1)
     if not os.path.isdir(dir):
-        #os.path.isdir
         status_logger.critical('XML Dir Specified Doesnt Exist: {}'.format(dir))
         exit(1)
-    xmlList=[]
+    xmlList = []
     try:
-        xmlList=os.listdir(dir)
+        xmlList = os.listdir(dir)
     except:
         status_logger.error('The XML Process Dir must be blank : {}'.format(dir))
 
@@ -322,7 +323,8 @@ def processMultipleXmls(dir):
 
 def main():
     parser = optparse.OptionParser()
-    parser.add_option('-i', '--xml-inputFile', help='*[REQUIRED]: Specify XML Input File', dest='xml_inputFile')
+    parser.add_option('-i', '--xml-inputFile', help='*[REQUIRED Unless Using -d]: Specify XML Input File',
+                      dest='xml_inputFile')
     parser.add_option('-o', '--word-outputFile', help='*[REQUIRED]: Specify WORD .Doc/Docx Output File',
                       dest='doc_outputFile')
     parser.add_option('-c', '--csv-outputFile', help='*[REQUIRED]: Specify CSV Output File',
@@ -338,9 +340,6 @@ def main():
     # cli_XMLFILE =  sys.argv[1]
     xmlFileIn = cli_XMLFILE
     docOutFile = cli_WORDFILE
-
-
-
 
     if not cli_XMLFILE or cli_XMLFILE == 'None':
         if not cli_XMLPROCESSDIR:
@@ -366,7 +365,7 @@ def main():
         status_logger.debug('XML Dir Import Cli ARG : {}'.format(cli_XMLPROCESSDIR))
         processMultipleXmls(cli_XMLPROCESSDIR)
     # status_logger.info('Command line XML Input file {}'.format(options.xml_inputFile))
-    #logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
+    # logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
     status_logger.info('Starting The Script {}'.format(os.path.basename(__file__)))
     status_logger.info('Using XML Input File: {}'.format(cli_XMLFILE))
     status_logger.info('Output Word Document : {}'.format(cli_WORDFILE))
