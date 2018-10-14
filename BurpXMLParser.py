@@ -156,8 +156,11 @@ def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issu
     paragraph = document.add_paragraph(remediationBackground)
 
     document.add_heading("Additional Information:", level=3)
-    # remediationBackground = strip_tags(remediationBackground)
-    paragraph = document.add_paragraph(vulnerabilityClassification)
+    # This is the fix for blank lines in CVE list
+    vulnerabilityClassification = vulnerabilityClassification.split('\n')
+    for i in vulnerabilityClassification:
+        if len(i) > 5:
+            document.add_paragraph(i, style='List Bullet')
 
     # add blank line to end of issue
     # paragraph = document.add_paragraph(' ')
@@ -173,7 +176,7 @@ def process(xmlInFile):
     global issueList
     issueList = []
     # inputfile for the XML
-    # THIS WILL BREAK IS YOU CHANGE HTML.PARSER!
+    # THIS WILL BREAK IF YOU CHANGE HTML.PARSER!
     # try:
     if not os.path.isfile(xmlFileIn):
         status_logger.critical('Cant open XML! {}'.format(xmlInFile))
@@ -213,7 +216,6 @@ def process(xmlInFile):
 
         try:
             vulnerabilityClassification = i.find('vulnerabilityclassifications').text
-
             vulnerabilityClassification = strip_tags(vulnerabilityClassification)
             status_logger.debug('Vuln Classification: {}'.format(vulnerabilityClassification))
 
