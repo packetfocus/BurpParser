@@ -22,6 +22,9 @@ logging.config.fileConfig('logging.conf')
 # create logger
 logger = logging.getLogger()
 status_logger = logging.getLogger('xmlparser.status')
+issues_logger = logging.getLogger('xmlparser.issues')
+
+#issues_logger.doRollover()
 
 # define globals
 global issueList
@@ -40,6 +43,14 @@ cli_XMLPROCESSDIR = ""
 # Set input and output files
 xmlFileIn = cli_XMLFILE
 docOutFile = cli_WORDFILE
+
+# clean up
+issue_logFile = os.path.join(os.getcwd(), 'issues', 'created-issues.log')
+if os.path.exists(issue_logFile):
+    os.remove(issue_logFile)
+    issues_logger.info('Cleaned up previous Issues Log File: {}'.format(issue_logFile))
+    issues_logger.info('Start Vuln Tracking and Analysis')
+
 
 # init Document
 document = Document()
@@ -116,6 +127,12 @@ def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issu
     # Build Our header format here.
     build_header = '{} ({})'.format(name, severity)
     status_logger.info('Creating Issue: {}'.format(build_header))
+    issues_logger.info('Creating Issue: {}'.format(build_header))
+    # this is right before the header gets written.
+    issue_logFile = os.path.join(os.getcwd(), 'issues', 'created-issues.log')
+    status_logger.info('Found Issues Log file: {}'.format(issue_logFile))
+    vulnExistCount = (open(issue_logFile, 'r').read().count(build_header))
+    issues_logger.info('{} Has Been Reported on {} Times'.format(build_header, str(vulnExistCount)))
     document.add_heading(build_header, level=1)
     document.add_heading("Vulnerable Host:", level=3)
     paragraph = document.add_paragraph(host)
