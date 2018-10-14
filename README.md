@@ -96,4 +96,4 @@ The xml/ and output/ directories are created by default.
     Added CLI options
     Added ability to parse all .xml files in directory with -d
     Usable supplied Word Doc Output Template
-    Craeates output CSV file
+    Creates output CSV file
