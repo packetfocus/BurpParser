@@ -11,12 +11,15 @@ import logging
 import logging.config
 from logging.config import fileConfig
 
+
 # Should be done better with loghandler. But cheap way to clear the issue log file on run
-#Have to delete the log file before the logged is init
+# Have to delete the log file before the logged is init
 def deleteFile(file):
     if os.path.exists(file):
         os.remove(file)
-issues_logFile = os.path.join('issues','created-issues.log')
+
+
+issues_logFile = os.path.join('issues', 'created-issues.log')
 deleteFile(issues_logFile)
 
 LOGGING_LEVELS = {'critical': logging.CRITICAL,
@@ -269,21 +272,20 @@ def process(xmlInFile):
             issueDetail = 'BLANK'
             status_logger.error('Issue Detail is blank for {}'.format(issueDetail))
 
-        #easier to build this once, so its standardized in logger and LIST
+        # easier to build this once, so its standardized in logger and LIST
         issueLine = 'Processed Issue: [{}]'.format(str('{} ({})'.format(name, '{} Risk'.format(severity))))
-        #Check here to see if issueLine already exists in the LIST. If it does, the issue is a repeat.
+        # Check here to see if issueLine already exists in the LIST. If it does, the issue is a repeat.
 
         if issueLine not in str(vulnList):
-
             # build our word document here
             buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground,
-                     vulnerabilityClassification)
-            #after issue gets entered into word.
+                         vulnerabilityClassification)
+            # after issue gets entered into word.
             vulnList.append(issueLine)
             issue_logger.info(issueLine)
 
         if issueLine in str(vulnList):
-            issue_logger.warning('{} ({}) Risk: Has already been reported on! Skipping!!'.format(name,severity))
+            issue_logger.warning('{} ({}) Risk: Has already been reported on! Skipping!!'.format(name, severity))
 
         """
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
