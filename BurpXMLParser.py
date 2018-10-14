@@ -11,6 +11,14 @@ import logging
 import logging.config
 from logging.config import fileConfig
 
+# Should be done better with loghandler. But cheap way to clear the issue log file on run
+#Have to delete the log file before the logged is init
+def deleteFile(file):
+    if os.path.exists(file):
+        os.remove(file)
+issues_logFile = os.path.join('issues','created-issues.log')
+deleteFile(issues_logFile)
+
 LOGGING_LEVELS = {'critical': logging.CRITICAL,
                   'error': logging.ERROR,
                   'warning': logging.WARNING,
@@ -19,9 +27,14 @@ LOGGING_LEVELS = {'critical': logging.CRITICAL,
 
 logging.config.fileConfig('logging.conf')
 
+
+
+
+
 # create logger
 logger = logging.getLogger()
 status_logger = logging.getLogger('xmlparser.status')
+issue_logger = logging.getLogger('xmlparser.issues')
 
 # define globals
 global issueList
@@ -260,6 +273,7 @@ def process(xmlInFile):
         # build our word document here
         buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground,
                      vulnerabilityClassification)
+        issue_logger.info('Processed Issue: [{}]'.format(str('{} ({})'.format(name, '{} Risk'.format(severity)))))
 
         """
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
