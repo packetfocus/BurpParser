@@ -27,10 +27,6 @@ LOGGING_LEVELS = {'critical': logging.CRITICAL,
 
 logging.config.fileConfig('logging.conf')
 
-
-
-
-
 # create logger
 logger = logging.getLogger()
 status_logger = logging.getLogger('xmlparser.status')
@@ -38,6 +34,7 @@ issue_logger = logging.getLogger('xmlparser.issues')
 
 # define globals
 global issueList
+global vulnList
 global xmlFileIn
 global docOutFile
 global cli_XMLFILE
@@ -54,6 +51,8 @@ cli_XMLPROCESSDIR = ""
 xmlFileIn = cli_XMLFILE
 docOutFile = cli_WORDFILE
 
+issueList = []
+vulnList = []
 # init Document
 document = Document()
 
@@ -270,10 +269,21 @@ def process(xmlInFile):
             issueDetail = 'BLANK'
             status_logger.error('Issue Detail is blank for {}'.format(issueDetail))
 
-        # build our word document here
-        buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground,
+        #easier to build this once, so its standardized in logger and LIST
+        issueLine = 'Processed Issue: [{}]'.format(str('{} ({})'.format(name, '{} Risk'.format(severity))))
+        #Check here to see if issueLine already exists in the LIST. If it does, the issue is a repeat.
+
+        if issueLine not in str(vulnList):
+
+            # build our word document here
+            buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground,
                      vulnerabilityClassification)
-        issue_logger.info('Processed Issue: [{}]'.format(str('{} ({})'.format(name, '{} Risk'.format(severity)))))
+            #after issue gets entered into word.
+            vulnList.append(issueLine)
+            issue_logger.info(issueLine)
+
+        if issueLine in str(vulnList):
+            issue_logger.warning('{} ({}) Risk: Has already been reported on! Skipping!!'.format(name,severity))
 
         """
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
@@ -283,6 +293,7 @@ def process(xmlInFile):
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
                   vulnerabilityClassification, issueDetail)
         issueList.append(result)
+
     status_logger.info('{} issues to report on'.format(len(issueList)))
     status_logger.info('Successfully Generate Data for Word Doc Creation')
 
