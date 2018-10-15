@@ -313,6 +313,8 @@ def createSkippedVulnsOutput():
     # add page break to get this appendix on new line
     document.add_page_break()
     document.add_heading('Additional Vulnerability Details', level=1)
+
+    skippedVulnList.sort()
     for skippedVuln in skippedVulnList:
         skippedVuln = str(skippedVuln)
         skippedVuln = skippedVuln.replace("'", "")
@@ -360,6 +362,8 @@ def createSkippedVulnsOutput():
         row_cells[1].text = host_url
         row_cells[1].width = Inches(6)
         row_cells[1].left_margin = .1
+        table.style = 'Light Grid Accent 1'
+
 
         table = document.add_table(rows=1, cols=2)
         # adjusted cell alignment here manually.
@@ -377,6 +381,7 @@ def createSkippedVulnsOutput():
         row_cells[1].text = path
         row_cells[1].width = Inches(.5)
         row_cells[1].left_margin = .1
+        table.style = 'Light Grid Accent 1'
 
 
 def writeCSV(csvFile):
