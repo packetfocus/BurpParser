@@ -285,7 +285,7 @@ def process(xmlInFile):
             # after issue gets entered into word.
             vulnList.append(issueLine)
             issue_logger.info(issueLine)
-        #logic if issue/vuln has already been reported on.
+        # logic if issue/vuln has already been reported on.
         if issueLine in str(vulnList):
             issue_logger.warning('{} ({}) Risk: Has already been reported on! Skipping!!'.format(name, severity))
             sendSkipped = (name, severity, host, ip, path, location, vulnerabilityClassification, confidence)
@@ -303,7 +303,6 @@ def process(xmlInFile):
 
     status_logger.info('{} issues to report on'.format(len(issueList)))
     status_logger.info('Successfully Generate Data for Word Doc Creation')
-
 
 
 def createSkippedVulnsOutput():
@@ -330,42 +329,54 @@ def createSkippedVulnsOutput():
         location = str(location)
         orig_location = location
         loc_count = location.count('/')
-        status_logger.debug('Location String {} location count : {}'.format(location, loc_count))
-        # this is a word formatting fix. If the location is / then we add host URL.
         if loc_count < 2:
-            status_logger.debug('Location/Path is Default "/" ')
             # full_location = os.path.join(host, location)
             full_location = host + location
             location = full_location
-        status_logger.debug('Location is Now {}'.format(location))
-        # reformat data if needed
-        # cheap oncoding of the comma by replacing it with |.
-        # probably need to move all these to after we pass data to the word function.
-        # then the commas could be fixed for building the CSV.
-
         severity = str(severity)
-        severity = severity + ' Risk'
-        # use title to fix Capitals
+        severity = severity + ' Risk '
         severity = severity.title()
-
-        # Build Our header format here.
         build_header = '{} ({})'.format(name, severity)
         status_logger.info('Creating Issue: {}'.format(build_header))
         document.add_heading(build_header, level=3)
-        document.add_heading("Vulnerable Host:", level=4)
-        paragraph = document.add_paragraph(host)
-        document.add_heading("Vulnerable URL:", level=4)
-        # fixing location string so HTTP isnt included twice.
         if 'http' in location:
             location = orig_location
         host_url = host + location
         host_url = host_url.replace(' ', '')
-        paragraph = document.add_paragraph(host_url)
-        document.add_heading("Confidence:", level=4)
-        paragraph = document.add_paragraph(confidence)
 
+        table = document.add_table(rows=1, cols=2)
+        # adjusted cell alignment here manually.
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Vulnerable Host:'
+        hdr_cells[0].width = Inches(1.5)
+        host = host.strip()
+        hdr_cells[1].text = host
+        hdr_cells[1].width = Inches(6)
+        hdr_cells[1].left_margin = .1
+        row_cells = table.add_row().cells
+        row_cells[0].text = 'Vulnerable URL:'
+        row_cells[0].width = Inches(1.5)
+        host_url = host_url.strip()
+        row_cells[1].text = host_url
+        row_cells[1].width = Inches(6)
+        row_cells[1].left_margin = .1
 
-
+        table = document.add_table(rows=1, cols=2)
+        # adjusted cell alignment here manually.
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Confidence:'
+        hdr_cells[0].width = Inches(.00)
+        confidence = confidence.strip()
+        hdr_cells[1].text = confidence
+        hdr_cells[1].width = Inches(.5)
+        hdr_cells[1].left_margin = .1
+        row_cells = table.add_row().cells
+        row_cells[0].text = 'Path:'
+        row_cells[0].width = Inches(.00)
+        path = path.strip()
+        row_cells[1].text = path
+        row_cells[1].width = Inches(.5)
+        row_cells[1].left_margin = .1
 
 
 def writeCSV(csvFile):
@@ -469,7 +480,7 @@ def main():
     status_logger.debug('cli_WORDFILE is Set to {}'.format(cli_WORDFILE))
     status_logger.debug('cli_XMLPROCESSDIR is Set to {}'.format(cli_XMLPROCESSDIR))
     writeCSV(cli_CSVFILE)
-    #generate the appendix
+    # generate the appendix
     createSkippedVulnsOutput()
     # Save Word Doc
     document.save(docOutFile)
