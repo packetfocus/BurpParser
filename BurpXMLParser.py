@@ -133,7 +133,7 @@ def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issu
     # Build Our header format here.
     build_header = '{} ({})'.format(name, severity)
     status_logger.info('Creating Issue: {}'.format(build_header))
-    document.add_heading(build_header, level=1)
+    document.add_heading(build_header, level=2)
     document.add_heading("Vulnerable Host:", level=3)
     paragraph = document.add_paragraph(host)
     document.add_heading("Vulnerable URL:", level=3)
@@ -316,6 +316,11 @@ def createSkippedVulnsOutput():
 
     skippedVulnList.sort()
     for skippedVuln in skippedVulnList:
+     skippedVuln= str(skippedVuln)
+     confidence = skippedVuln.split(',')[7]
+     confidence = confidence.split(')')[0]
+     confidence = str(confidence).lower()
+     if not confidence == 'tentative':
         skippedVuln = str(skippedVuln)
         skippedVuln = skippedVuln.replace("'", "")
         name = skippedVuln.split(',')[0]
@@ -362,7 +367,7 @@ def createSkippedVulnsOutput():
         row_cells[1].text = host_url
         row_cells[1].width = Inches(6)
         row_cells[1].left_margin = .1
-        table.style = 'Light Grid Accent 1'
+        #table.style = 'Light Grid Accent 1'
 
 
         table = document.add_table(rows=1, cols=2)
@@ -381,7 +386,24 @@ def createSkippedVulnsOutput():
         row_cells[1].text = path
         row_cells[1].width = Inches(.5)
         row_cells[1].left_margin = .1
-        table.style = 'Light Grid Accent 1'
+        #table.style = 'Light Grid Accent 1'
+
+        table = document.add_table(rows=1, cols=2)
+        # adjusted cell alignment here manually.
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'IP:'
+        hdr_cells[0].width = Inches(.00)
+        ip = ip.strip()
+        hdr_cells[1].text = ip
+        hdr_cells[1].width = Inches(.5)
+        hdr_cells[1].left_margin = .1
+        row_cells = table.add_row().cells
+        row_cells[0].text = 'Logged in As:'
+        row_cells[0].width = Inches(.00)
+        path = path.strip()
+        row_cells[1].text = 'Development User'
+        row_cells[1].width = Inches(.5)
+        row_cells[1].left_margin = .1
 
 
 def writeCSV(csvFile):
