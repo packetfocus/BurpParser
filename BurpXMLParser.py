@@ -11,12 +11,15 @@ import logging
 import logging.config
 from logging.config import fileConfig
 
+
 # Should be done better with loghandler. But cheap way to clear the issue log file on run
-#Have to delete the log file before the logged is init
+# Have to delete the log file before the logged is init
 def deleteFile(file):
     if os.path.exists(file):
         os.remove(file)
-issues_logFile = os.path.join('issues','created-issues.log')
+
+
+issues_logFile = os.path.join('issues', 'created-issues.log')
 deleteFile(issues_logFile)
 
 LOGGING_LEVELS = {'critical': logging.CRITICAL,
@@ -27,10 +30,6 @@ LOGGING_LEVELS = {'critical': logging.CRITICAL,
 
 logging.config.fileConfig('logging.conf')
 
-
-
-
-
 # create logger
 logger = logging.getLogger()
 status_logger = logging.getLogger('xmlparser.status')
@@ -38,6 +37,8 @@ issue_logger = logging.getLogger('xmlparser.issues')
 
 # define globals
 global issueList
+global vulnList
+global skippedVulnList
 global xmlFileIn
 global docOutFile
 global cli_XMLFILE
@@ -54,6 +55,9 @@ cli_XMLPROCESSDIR = ""
 xmlFileIn = cli_XMLFILE
 docOutFile = cli_WORDFILE
 
+issueList = []
+vulnList = []
+skippedVulnList = []
 # init Document
 document = Document()
 
@@ -129,7 +133,7 @@ def buildWordDoc(name, severity, host, ip, path, location, issueBackground, issu
     # Build Our header format here.
     build_header = '{} ({})'.format(name, severity)
     status_logger.info('Creating Issue: {}'.format(build_header))
-    document.add_heading(build_header, level=1)
+    document.add_heading(build_header, level=2)
     document.add_heading("Vulnerable Host:", level=3)
     paragraph = document.add_paragraph(host)
     document.add_heading("Vulnerable URL:", level=3)
@@ -270,21 +274,136 @@ def process(xmlInFile):
             issueDetail = 'BLANK'
             status_logger.error('Issue Detail is blank for {}'.format(issueDetail))
 
-        # build our word document here
-        buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground,
-                     vulnerabilityClassification)
-        issue_logger.info('Processed Issue: [{}]'.format(str('{} ({})'.format(name, '{} Risk'.format(severity)))))
+        # easier to build this once, so its standardized in logger and LIST
+        issueLine = 'Processed Issue: [{}]'.format(str('{} ({})'.format(name, '{} Risk'.format(severity))))
+        # Check here to see if issueLine already exists in the LIST. If it does, the issue is a repeat.
+
+        if issueLine not in str(vulnList):
+            # build our word document here
+            buildWordDoc(name, severity, host, ip, path, location, issueBackground, issueDetail, remediationBackground,
+                         vulnerabilityClassification)
+            # after issue gets entered into word.
+            vulnList.append(issueLine)
+            issue_logger.info(issueLine)
+        # logic if issue/vuln has already been reported on.
+        if issueLine in str(vulnList):
+            issue_logger.warning('{} ({}) Risk: Has already been reported on! Skipping!!'.format(name, severity))
+            sendSkipped = (name, severity, host, ip, path, location, vulnerabilityClassification, confidence)
+            skippedVulnList.append(sendSkipped)
 
         """
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
                   vulnerabilityClassification, issueDetail, request, response)
+                  ('{},{},{},{},{},{},{},{},{},{}').format
         """
         # document.add_page_break()
         result = (name, host, ip, location, severity, confidence, issueBackground, remediationBackground,
                   vulnerabilityClassification, issueDetail)
         issueList.append(result)
+
     status_logger.info('{} issues to report on'.format(len(issueList)))
     status_logger.info('Successfully Generate Data for Word Doc Creation')
+
+
+def createSkippedVulnsOutput():
+    """
+    sendSkipped = (name, severity, host, ip, path, location, vulnerabilityClassification, confidence)
+
+    """
+    # add page break to get this appendix on new line
+    document.add_page_break()
+    document.add_heading('Additional Vulnerability Details', level=1)
+
+    skippedVulnList.sort()
+    for skippedVuln in skippedVulnList:
+     skippedVuln= str(skippedVuln)
+     confidence = skippedVuln.split(',')[7]
+     confidence = confidence.split(')')[0]
+     confidence = str(confidence).lower()
+     if not confidence == 'tentative':
+        skippedVuln = str(skippedVuln)
+        skippedVuln = skippedVuln.replace("'", "")
+        name = skippedVuln.split(',')[0]
+        # stripping the first ( from the issue name in the report.
+        name = name.split('(')[1]
+        severity = skippedVuln.split(',')[1]
+        host = skippedVuln.split(',')[2]
+        ip = skippedVuln.split(',')[3]
+        path = skippedVuln.split(',')[4]
+        location = skippedVuln.split(',')[5]
+        confidence = skippedVuln.split(',')[7]
+        confidence = confidence.split(')')[0]
+        location = str(location)
+        orig_location = location
+        loc_count = location.count('/')
+        if loc_count < 2:
+            # full_location = os.path.join(host, location)
+            full_location = host + location
+            location = full_location
+        severity = str(severity)
+        severity = severity + ' Risk '
+        severity = severity.title()
+        build_header = '{} ({})'.format(name, severity)
+        status_logger.info('Creating Issue: {}'.format(build_header))
+        document.add_heading(build_header, level=3)
+        if 'http' in location:
+            location = orig_location
+        host_url = host + location
+        host_url = host_url.replace(' ', '')
+
+        table = document.add_table(rows=1, cols=2)
+        # adjusted cell alignment here manually.
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Vulnerable Host:'
+        hdr_cells[0].width = Inches(1.5)
+        host = host.strip()
+        hdr_cells[1].text = host
+        hdr_cells[1].width = Inches(6)
+        hdr_cells[1].left_margin = .1
+        row_cells = table.add_row().cells
+        row_cells[0].text = 'Vulnerable URL:'
+        row_cells[0].width = Inches(1.5)
+        host_url = host_url.strip()
+        row_cells[1].text = host_url
+        row_cells[1].width = Inches(6)
+        row_cells[1].left_margin = .1
+        #table.style = 'Light Grid Accent 1'
+
+
+        table = document.add_table(rows=1, cols=2)
+        # adjusted cell alignment here manually.
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Confidence:'
+        hdr_cells[0].width = Inches(.00)
+        confidence = confidence.strip()
+        hdr_cells[1].text = confidence
+        hdr_cells[1].width = Inches(.5)
+        hdr_cells[1].left_margin = .1
+        row_cells = table.add_row().cells
+        row_cells[0].text = 'Path:'
+        row_cells[0].width = Inches(.00)
+        path = path.strip()
+        row_cells[1].text = path
+        row_cells[1].width = Inches(.5)
+        row_cells[1].left_margin = .1
+        #table.style = 'Light Grid Accent 1'
+
+        table = document.add_table(rows=1, cols=2)
+        # adjusted cell alignment here manually.
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'IP:'
+        hdr_cells[0].width = Inches(.00)
+        ip = ip.strip()
+        hdr_cells[1].text = ip
+        hdr_cells[1].width = Inches(.5)
+        hdr_cells[1].left_margin = .1
+        row_cells = table.add_row().cells
+        row_cells[0].text = 'Logged in As:'
+        row_cells[0].width = Inches(.00)
+        path = path.strip()
+        row_cells[1].text = 'Development User'
+        row_cells[1].width = Inches(.5)
+        row_cells[1].left_margin = .1
 
 
 def writeCSV(csvFile):
@@ -388,6 +507,8 @@ def main():
     status_logger.debug('cli_WORDFILE is Set to {}'.format(cli_WORDFILE))
     status_logger.debug('cli_XMLPROCESSDIR is Set to {}'.format(cli_XMLPROCESSDIR))
     writeCSV(cli_CSVFILE)
+    # generate the appendix
+    createSkippedVulnsOutput()
     # Save Word Doc
     document.save(docOutFile)
     status_logger.info('Task Has Completed')
