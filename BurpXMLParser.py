@@ -214,12 +214,16 @@ def process(xmlInFile):
         location = i.find('location').text
         severity = i.find('severity').text
         confidence = i.find('confidence').text
-        issueBackground = i.find('issuebackground').text
-        issueBackground = str(issueBackground)
-        # have to replace commas before making csv. Replaced with | for now.
-        issueBackground = strip_tags(issueBackground)
-        # this was a fix for the CSV outfile. Need to rethink the order of this.
-        issueBackground = issueBackground.replace(',', "|")
+        try:
+            issueBackground = i.find('issuebackground').text
+            issueBackground = str(issueBackground)
+
+            # have to replace commas before making csv. Replaced with | for now.
+            issueBackground = strip_tags(issueBackground)
+            # this was a fix for the CSV outfile. Need to rethink the order of this.
+            issueBackground = issueBackground.replace(',', "|")
+        except:
+            pass
 
         try:
             remediationBackground = i.find('remediationbackground').text
